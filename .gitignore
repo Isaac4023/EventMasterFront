@@ -1,8 +1,4 @@
-# Lo que SÍ debe ir al repo para tu compañero:
-# package.json, package-lock.json, app/, src/, app.json, assets/, README,
-# eslint.config.js
 
-# --- Config local del editor (cada quien usa el IDE que prefiera) ---
 .cursor/
 .vscode/
 
@@ -49,8 +45,3 @@ yarn-error.*
 Thumbs.db
 *.orig.*
 
-# --- TypeScript (si en el futuro vuelven a usarlo) ---
-*.tsbuildinfo
-
-# --- Otros ---
-app-example
