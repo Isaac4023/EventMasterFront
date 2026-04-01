@@ -2,7 +2,6 @@ import { Text } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import Layout from "../../src/components/Layout";
-import Input from "../src/components/Input";
 import CustomButton from "../src/components/CustomButton";
 import useAuth from "../src/hooks/useAuth";
 
