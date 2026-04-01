@@ -1,13 +1,16 @@
-import { View, Text, Button } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text } from "react-native";
+import useEvents from "../../src/hooks/useEvents";
 
 export default function UserHome() {
-  const router = useRouter();
+  const { events } = useEvents();
 
   return (
     <View>
       <Text>Eventos</Text>
-      <Button title="Ver evento" onPress={() => router.push("/user/event")} />
+
+      {events.map((e) => (
+        <Text key={e.id}>{e.name}</Text>
+      ))}
     </View>
   );
 }
