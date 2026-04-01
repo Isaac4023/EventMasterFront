@@ -3,15 +3,25 @@ import { getEvents } from "../services/eventService";
 
 export default function useEvents() {
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const load = async () => {
-    const data = await getEvents();
-    setEvents(data);
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      const data = await getEvents();
+      setEvents(data);
+    } catch (error) {
+      console.log("Error loading events:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  load();
-}, []);
-
-  return { events };
+  return {
+    events,
+    loading
+  };
 }

@@ -1,5 +1,9 @@
 import { eventsMock } from "../mocks/eventsMock";
 
 export const getEvents = async () => {
-  return eventsMock;
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(eventsMock);
+    }, 300);
+  });
 };
