@@ -1,18 +1,28 @@
-import { View, Text } from "react-native";
-import { useRouter } from "expo-router";
+import { TextInput } from "react-native";
+import Layout from "@/src/components/Layout";
 import CustomButton from "../../src/components/CustomButton";
+import { useRouter } from "expo-router";
 
 export default function Places() {
   const router = useRouter();
 
   return (
-    <View>
-      <Text>Manage Places</Text>
+    <Layout>
+      <Input placeholder="Nombre del lugar" />
+      <Input placeholder="Capacidad" />
+      <Input placeholder="Ubicación" />
+
+      <CustomButton title="Subir imagen" onPress={() => {}} />
 
       <CustomButton
-        title="Ver Lugar"
-        onPress={() => router.push("/admin/place-detail")}
+        title="Guardar"
+        onPress={() => router.replace("/admin")}
       />
-    </View>
+
+      <CustomButton
+        title="Archivar"
+        onPress={() => router.replace("/admin")}
+      />
+    </Layout>
   );
 }
