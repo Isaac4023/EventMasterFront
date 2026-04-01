@@ -1,13 +1,13 @@
 import { View, Text, Button } from "react-native";
 import { useRouter } from "expo-router";
 
-export default function Home() {
+export default function UserHome() {
   const router = useRouter();
 
   return (
     <View>
-      <Text>Home</Text>
-      <Button title="Ir a Login" onPress={() => router.push("/login")} />
+      <Text>Eventos</Text>
+      <Button title="Ver evento" onPress={() => router.push("/user/event")} />
     </View>
   );
 }
