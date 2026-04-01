@@ -9,7 +9,7 @@ export default function AdminFooter() {
     <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
       <CustomButton title="Status" onPress={() => router.replace("/admin")} />
       <CustomButton title="Events" onPress={() => router.replace("/admin/events")} />
-      <CustomButton title="Settings" onPress={() => {}} />
+      <CustomButton title="Logout" onPress={() => router.replace("/login")} />
     </View>
   );
 }

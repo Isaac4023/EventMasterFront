@@ -1,8 +1,9 @@
-import Layout from "../src/components/Layout";
 import AdminFooter from "../../src/components/AdminFooter";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
 import Layout from "../../src/components/Layout";
+import Input from "../../src/components/Input";
+
 
 export default function CreateEvent() {
   const router = useRouter();
