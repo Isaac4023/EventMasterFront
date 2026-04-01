@@ -17,6 +17,11 @@ export default function Staff() {
         title="Verificar Ticket"
         onPress={() => router.push("/staff/success")}
       />
+
+      <CustomButton
+        title="Logout"
+        onPress={() => router.replace("/login")}
+      />
     </Layout>
   );
 }
