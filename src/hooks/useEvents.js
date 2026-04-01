@@ -5,8 +5,13 @@ export default function useEvents() {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    setEvents(getEvents());
-  }, []);
+  const load = async () => {
+    const data = await getEvents();
+    setEvents(data);
+  };
+
+  load();
+}, []);
 
   return { events };
 }
