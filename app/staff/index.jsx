@@ -23,7 +23,6 @@ export default function Staff() {
         title="Logout"
         onPress={() => router.replace("/login")}
       />
-      
     </Layout>
   );
 }
