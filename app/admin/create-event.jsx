@@ -1,6 +1,5 @@
 import Layout from "../src/components/Layout";
 import AdminFooter from "../../src/components/AdminFooter";
-import Input from "../../src/components/Input";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
 

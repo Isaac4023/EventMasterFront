@@ -1,5 +1,4 @@
 import { Text } from "react-native";
-import Layout from "../../src/components/Layout";
 import UserFooter from "../../src/components/UserFooter";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
