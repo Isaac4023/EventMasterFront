@@ -11,7 +11,13 @@ export default function Layout({ children, footer }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "space-between" },
-  content: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   footer: {
     flexDirection: "row",
     justifyContent: "space-around",

@@ -1,9 +1,11 @@
-import { View, Text } from "react-native";
+import { Text } from "react-native";
+import Layout from "../src/components/Layout";
+import UserFooter from "../../src/components/UserFooter";
 
 export default function Success() {
   return (
-    <View>
+    <Layout footer={<UserFooter />}>
       <Text>Reserva exitosa</Text>
-    </View>
+    </Layout>
   );
 }

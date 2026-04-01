@@ -1,10 +1,11 @@
 import { Text } from "react-native";
-import Layout from "../../src/components/Layout";
+import Layout from "../src/components/Layout";
+import AdminFooter from "../../src/components/AdminFooter";
 
 export default function Events() {
   return (
-    <Layout>
-      <Text>Eventos creados (mock)</Text>
+    <Layout footer={<AdminFooter />}>
+      <Text>Eventos creados</Text>
     </Layout>
   );
 }

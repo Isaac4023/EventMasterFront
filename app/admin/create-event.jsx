@@ -1,6 +1,6 @@
-import { TextInput } from "react-native";
+import Layout from "../src/components/Layout";
+import AdminFooter from "../../src/components/AdminFooter";
 import Input from "../../src/components/Input";
-import Layout from "../../src/components/Layout";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
 
@@ -8,7 +8,7 @@ export default function CreateEvent() {
   const router = useRouter();
 
   return (
-    <Layout>
+    <Layout footer={<AdminFooter />}>
       <Input placeholder="Nombre" />
       <Input placeholder="Ubicación" />
       <Input placeholder="Fecha" />

@@ -1,5 +1,6 @@
-import { Text, View } from "react-native";
-import Layout from "../../src/components/Layout";
+import { Text } from "react-native";
+import Layout from "../src/components/Layout";
+import UserFooter from "../../src/components/UserFooter";
 import useEvents from "../../src/hooks/useEvents";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
@@ -9,15 +10,7 @@ export default function UserHome() {
   const router = useRouter();
 
   return (
-    <Layout
-      footer={
-        <>
-          <CustomButton title="Events" onPress={() => router.push("/user")} />
-          <CustomButton title="Tickets" onPress={() => router.push("/user/tickets")} />
-          <CustomButton title="Profile" onPress={() => router.push("/user/profile")} />
-        </>
-      }
-    >
+    <Layout footer={<UserFooter />}>
       <Text>Eventos</Text>
 
       {events.map((e) => (

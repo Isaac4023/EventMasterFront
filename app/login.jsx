@@ -1,28 +1,29 @@
-import { View, Text, TextInput, Button } from "react-native";
+import { Text } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import Layout from "../../src/components/Layout";
+import Input from "../src/components/Input";
+import CustomButton from "../src/components/CustomButton";
 import useAuth from "../src/hooks/useAuth";
 
 export default function Login() {
   const router = useRouter();
-  const { handleLogin, error } = useAuth();
+  const { handleLogin } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   return (
-    <View>
-      <Text>Login</Text>
+    <Layout>
+      <Text style={{ marginBottom: 10 }}>Login</Text>
 
-      <TextInput placeholder="Email" onChangeText={setEmail} />
-      <TextInput placeholder="Password" onChangeText={setPassword} />
+      <Input placeholder="Email" onChangeText={setEmail} />
+      <Input placeholder="Password" secureTextEntry onChangeText={setPassword} />
 
-      <Button
+      <CustomButton
         title="Login"
         onPress={() => handleLogin(email, password, router)}
       />
-
-      {error ? <Text>{error}</Text> : null}
-    </View>
+    </Layout>
   );
 }
