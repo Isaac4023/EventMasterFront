@@ -2,15 +2,16 @@ import { View, Text } from "react-native";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
 
-export default function Event() {
+export default function Scan() {
   const router = useRouter();
 
   return (
     <View>
-      <Text>Detalle del evento</Text>
+      <Text>Escaneo QR</Text>
+
       <CustomButton
-        title="Reservar"
-        onPress={() => router.push("/user/reserve")}
+        title="Validar"
+        onPress={() => router.push("/staff/success")}
       />
     </View>
   );

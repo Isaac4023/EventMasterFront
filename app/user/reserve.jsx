@@ -1,4 +1,5 @@
-import { View, Text, Button } from "react-native";
+import { View, Text } from "react-native";
+import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
 
 export default function Reserve() {
@@ -6,8 +7,11 @@ export default function Reserve() {
 
   return (
     <View>
-      <Text>Reservar</Text>
-      <Button title="Confirmar" onPress={() => router.push("/user/success")} />
+      <Text>Reservar evento</Text>
+      <CustomButton
+        title="Confirmar"
+        onPress={() => router.push("/user/success")}
+      />
     </View>
   );
 }
