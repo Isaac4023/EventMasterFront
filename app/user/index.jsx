@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import Layout from "@/src/components/Layout";
+import Layout from "../../src/components/Layout";
 import useEvents from "../../src/hooks/useEvents";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";

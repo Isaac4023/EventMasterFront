@@ -1,6 +1,6 @@
 import { TextInput } from "react-native";
 import Input from "../../src/components/Input";
-import Layout from "@/src/components/Layout";
+import Layout from "../../src/components/Layout";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
 

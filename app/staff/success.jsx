@@ -1,5 +1,5 @@
 import { Text } from "react-native";
-import Layout from "@/src/components/Layout";
+import Layout from "../../src/components/Layout";
 
 export default function Success() {
   return (
