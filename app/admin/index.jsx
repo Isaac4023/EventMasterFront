@@ -2,6 +2,7 @@ import { Text } from "react-native";
 import AdminFooter from "../../src/components/AdminFooter";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
+import Layout from "../../src/components/Layout";
 
 export default function Admin() {
   const router = useRouter();

@@ -1,6 +1,7 @@
 import { Text } from "react-native";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
+import Layout from "../../src/components/Layout";
 
 export default function Success() {
   const router = useRouter();

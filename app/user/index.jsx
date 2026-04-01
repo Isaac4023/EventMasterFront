@@ -3,6 +3,7 @@ import UserFooter from "../../src/components/UserFooter";
 import useEvents from "../../src/hooks/useEvents";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
+import Layout from "../../src/components/Layout";
 
 export default function UserHome() {
   const { events } = useEvents();

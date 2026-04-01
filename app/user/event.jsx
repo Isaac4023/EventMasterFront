@@ -2,6 +2,7 @@ import { Text } from "react-native";
 import UserFooter from "../../src/components/UserFooter";
 import CustomButton from "../../src/components/CustomButton";
 import { useRouter } from "expo-router";
+import Layout from "../../src/components/Layout";
 
 export default function Event() {
   const router = useRouter();

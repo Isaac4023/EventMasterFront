@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import CustomButton from "../src/components/CustomButton";
 import useAuth from "../src/hooks/useAuth";
+import Layout from "../src/components/Layout";
 
 export default function Login() {
   const router = useRouter();
