@@ -5,24 +5,8 @@ import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 
-const MOCK_EVENTS = [
-  {
-    id: '1',
-    title: 'Tech Conference 2026',
-    subtitle: '30 de Marzo • Auditorio Central',
-    salesPercentage: 15,
-    primaryColor: '#0d9a70',
-    imageUrl: null, // Si es nulo, el componente pintará el color primario simulando figma
-  },
-  {
-    id: '2',
-    title: 'Music Fest',
-    subtitle: '05 de Abril • Estadio Norte',
-    salesPercentage: 60,
-    primaryColor: '#fa6203',
-    imageUrl: null,
-  }
-];
+// TODO: Populate with data from API hook
+const MOCK_EVENTS = [];
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -58,6 +42,7 @@ export default function HomeScreen() {
         data={MOCK_EVENTS}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles. Cargando desde API...</Text>}
         renderItem={({ item }) => (
           <EventCard 
             title={item.title}
@@ -119,5 +104,11 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 100, // Espacio para que el BottomNav no tape los ultimos items
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 40,
+    fontSize: 14,
   }
 });
