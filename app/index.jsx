@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert } from 'react-native';
 import { AppTextInput } from '../src/components/AppTextInput';
 import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
@@ -11,6 +11,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
+    // TODO: REMOVE BEFORE MERGE - Credenciales de prueba exclusivas para navegar en UI
+    if (email.trim() === 'test@test.com' && password === '123') {
+      router.replace('/home');
+      return;
+    }
+    Alert.alert('Error', 'Para prototipar usa: test@test.com / 123');
+
     // TODO: Connect with useAuth hook from Chuy
     console.log('Login attempt', email, password);
   };
