@@ -1,0 +1,47 @@
+
+.cursor/
+.vscode/
+
+# --- Dependencias (cada quien corre npm install) ---
+node_modules/
+
+# --- Expo / builds ---
+.expo/
+dist/
+web-build/
+
+# --- Variables de entorno con secretos (no subir) ---
+# Sube un .env.example sin contraseñas; el .env real solo en cada máquina.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# --- Nativo generado (Expo prebuild / eas) ---
+/ios
+/android
+.kotlin/
+
+# --- Claves y firmas (nunca al repo) ---
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# --- Metro / herramientas ---
+.metro-health-check*
+
+# --- Logs y depuración ---
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# --- SO / editor (opcional local) ---
+.DS_Store
+Thumbs.db
+*.orig.*
+
