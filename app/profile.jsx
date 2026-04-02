@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const [name, setName] = useState('John Doe');
+  const [profileInfo, setProfileInfo] = useState(null);
 
   const handleLogout = () => {
     // TODO: Connect with Auth logout hook
@@ -25,23 +25,31 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.content}>
-        {/* Avatar */}
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarInitial}>{name.charAt(0)}</Text>
-        </View>
+        {profileInfo ? (
+          <>
+            {/* Avatar */}
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarInitial}>{profileInfo.name?.charAt(0) || '?'}</Text>
+            </View>
 
-        {/* Nombre Display */}
-        <Text style={styles.nameText}>{name}</Text>
+            {/* Nombre Display */}
+            <Text style={styles.nameText}>{profileInfo.name}</Text>
 
-        {/* Input Editable (Simulando edición de perfil) */}
-        <View style={styles.inputSection}>
-          <AppTextInput 
-            value={name}
-            onChangeText={setName}
-            placeholder="Full Name"
-            autoCapitalize="words"
-          />
-        </View>
+            {/* Input Editable */}
+            <View style={styles.inputSection}>
+              <AppTextInput 
+                value={profileInfo.name}
+                onChangeText={(text) => setProfileInfo({...profileInfo, name: text})}
+                placeholder="Full Name"
+                autoCapitalize="words"
+              />
+            </View>
+          </>
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={{color: '#94a3b8'}}>Cargando perfil...</Text>
+          </View>
+        )}
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>

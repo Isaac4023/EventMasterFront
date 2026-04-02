@@ -16,7 +16,11 @@ export default function LoginScreen() {
       router.replace('/home');
       return;
     }
-    Alert.alert('Error', 'Para prototipar usa: test@test.com / 123');
+    if (email.trim() === 'admin@test.com' && password === '123') {
+      router.replace('/admin-home');
+      return;
+    }
+    Alert.alert('Error', 'Prototipo: test@test.com (user) o admin@test.com (admin) / Pass: 123');
 
     // TODO: Connect with useAuth hook from Chuy
     console.log('Login attempt', email, password);

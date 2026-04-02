@@ -3,15 +3,23 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { colors } from '../theme/colors';
 import { useRouter } from 'expo-router';
 
-export const BottomNav = ({ activeRoute = 'home' }) => {
+export const BottomNav = ({ activeRoute = 'home', isAdmin = false }) => {
   const router = useRouter();
 
   // Propiedades de navegación base del diseño Figma
-  const navItems = [
+  const userNavItems = [
     { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/home' },
     { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/tickets' },
     { id: 'profile', title: 'Perfil', icon: require('../../assets/images/user.png'), route: '/profile' },
   ];
+
+  const adminNavItems = [
+    { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/admin-home' },
+    { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/admin-manage-places' },
+    { id: 'profile', title: 'Perfil', icon: require('../../assets/images/user.png'), route: '/admin-profile' },
+  ];
+
+  const navItems = isAdmin ? adminNavItems : userNavItems;
 
   return (
     <View style={styles.container}>
