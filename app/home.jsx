@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, Image, StatusBar } from 'r
 import { colors } from '../src/theme/colors';
 import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
+import { useRouter } from 'expo-router';
 
 const MOCK_EVENTS = [
   {
@@ -24,11 +25,11 @@ const MOCK_EVENTS = [
 ];
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleEventPress = (id) => {
-    // TODO: Navigate to Event Details
-    console.log('Navigate to event', id);
+    router.push(`/event-details?id=${id}`);
   };
 
   return (
