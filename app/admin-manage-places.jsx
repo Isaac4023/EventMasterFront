@@ -59,7 +59,7 @@ export default function AdminManagePlacesScreen() {
         </View>
       </ScrollView>
 
-      <BottomNav activeRoute="tickets" isAdmin={true} />
+      <BottomNav activeRoute="tickets" role="admin" />
     </View>
   );
 }

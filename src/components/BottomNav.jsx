@@ -15,7 +15,7 @@ export const BottomNav = ({ activeRoute = 'home', role = 'user' }) => {
 
   const adminNavItems = [
     { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/admin-home' },
-    { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/admin-manage-places' },
+    { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/admin-dashboard' },
     { id: 'profile', title: 'Perfil', icon: require('../../assets/images/user.png'), route: '/profile' },
   ];
 

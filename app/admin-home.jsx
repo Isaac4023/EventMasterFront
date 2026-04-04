@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../src/theme/colors';
@@ -6,17 +6,15 @@ import { BottomNav } from '../src/components/BottomNav';
 
 export default function AdminHomeScreen() {
   const router = useRouter();
-  // TODO (Chuy): Llenar estos estados con axios
-  const [stats, setStats] = useState(null);
-  const [recentActivity, setRecentActivity] = useState([]);
-
-  const QUICK_ACTIONS = [
-    { id: '1', title: 'Nuevo Evento', icon: 'M12 4v16m8-8H4', route: '/admin-new-event' },
-    { id: '2', title: 'Nueva Sede', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', route: '/admin-new-venue' },
-    { id: '3', title: 'Generar Reporte', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', route: '/admin-dashboard' },
-  ];
-
-  const getInitials = (name) => name.charAt(0).toUpperCase();
+  // TODO (Chuy): Consume API for admin dashboard data
+  const [stats, setStats] = useState({
+    ventas: '$15.4k',
+    aforo: '85%'
+  });
+  
+  const [activeEvents, setActiveEvents] = useState([
+    { id: '1', name: 'Concierto Rock' }
+  ]);
 
   return (
     <View style={styles.container}>
@@ -25,83 +23,60 @@ export default function AdminHomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>BIENVENIDO,</Text>
           <Text style={styles.adminName}>Admin Panel</Text>
         </View>
 
-        {/* Stats Grid */}
-        {stats ? (
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>BOLETOS HOY</Text>
-              <Text style={styles.statValue}>{stats.todayTickets}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>INGRESOS (MES)</Text>
-              <Text style={styles.statValue}>${stats.monthlyRevenue}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>EVENTOS ACTIVOS</Text>
-              <Text style={styles.statValue}>{stats.activeEvents}</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: 'rgba(13, 154, 112, 0.15)' }]}>
-              <Text style={[styles.statLabel, { color: colors.primary }]}>OCUPACIÓN</Text>
-              <Text style={[styles.statValue, { color: colors.primary }]}>{stats.avgOccupancy}%</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Cargando estadísticas...</Text>
-          </View>
-        )}
-
-        {/* Quick Actions */}
+        {/* Overview Container */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ACCIONES RÁPIDAS</Text>
-          <View style={styles.quickActionsGrid}>
-            {QUICK_ACTIONS.map(action => (
-              <TouchableOpacity 
-                key={action.id} 
-                style={styles.actionCard}
-                onPress={() => router.push(action.route)}
-              >
-                <View style={styles.actionIconPlaceholder}>
-                  <Text style={styles.actionIconFallback}>{action.title.charAt(0)}</Text>
-                </View>
-                <Text style={styles.actionTitle}>{action.title}</Text>
+          <Text style={styles.sectionTitle}>Overview</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>VENTAS</Text>
+              <Text style={styles.statValueRed}>{stats.ventas}</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>AFORO</Text>
+              <Text style={styles.statValueRed}>{stats.aforo}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Actions Container */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
+          
+          <TouchableOpacity 
+            style={styles.outlineActionCard}
+            onPress={() => router.push('/admin-new-venue')}
+          >
+            <Text style={styles.outlineActionText}>+ Registrar Lugar</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.solidActionCard}
+            onPress={() => router.push('/admin-new-event')}
+          >
+            <Text style={styles.solidActionText}>+ Nuevo evento</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Active Events Container */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Eventos Activos</Text>
+          
+          {activeEvents.map((event) => (
+            <View key={event.id} style={styles.activeEventCard}>
+              <Text style={styles.activeEventName}>{event.name}</Text>
+              <TouchableOpacity onPress={() => router.push('/admin-place-details')}>
+                <Text style={styles.editButtonText}>EDIT</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Recent Activity */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>ACTIVIDAD RECIENTE</Text>
-          </View>
-
-          {recentActivity.length > 0 ? (
-            recentActivity.map(activity => (
-              <View key={activity.id} style={styles.activityItem}>
-                <View style={styles.activityAvatar}>
-                  <Text style={styles.avatarText}>{getInitials(activity.user)}</Text>
-                </View>
-                <View style={styles.activityInfo}>
-                  <Text style={styles.activityAction}>{activity.action}</Text>
-                  <Text style={styles.activityUser}>{activity.user} • {activity.event}</Text>
-                </View>
-                <Text style={styles.activityTime}>{activity.time}</Text>
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyContainer}>
-               <Text style={styles.emptyText}>No hay actividad reciente cargada.</Text>
             </View>
-          )}
+          ))}
         </View>
+
       </ScrollView>
 
-      <BottomNav activeRoute="admin" isAdmin={true} />
+      <BottomNav activeRoute="home" role="admin" />
     </View>
   );
 }
@@ -109,7 +84,7 @@ export default function AdminHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#0a0e14',
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -117,105 +92,102 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 30,
+    paddingBottom: 20,
     alignItems: 'center',
   },
-  headerTitle: {
-    color: colors.primary,
+  adminName: {
+    color: '#0d9a70',
     fontSize: 16,
-    fontWeight: '900',
+    fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
+  section: {
+    marginBottom: 30,
+  },
   sectionTitle: {
-    color: colors.textSecondary,
+    color: '#94a3b8',
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.5,
-    marginTop: 20,
-    marginBottom: 10,
     textTransform: 'uppercase',
+    marginBottom: 15,
   },
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 12,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#1a232e',
+    borderColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
     borderRadius: 24,
     padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    gap: 5,
   },
-  statTitle: {
-    color: colors.textSecondary,
+  statLabel: {
+    color: '#94a3b8',
     fontSize: 10,
-    marginBottom: 5,
-    textTransform: 'uppercase',
   },
-  statValue: {
-    color: colors.danger,
+  statValueRed: {
+    color: '#f44',
     fontSize: 18,
-    fontWeight: '900',
+    fontWeight: '800',
   },
-  actionsContainer: {
-    gap: 15,
-    marginTop: 10,
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
+  outlineActionCard: {
+    backgroundColor: 'transparent',
+    borderColor: '#0d9a70',
+    borderWidth: 1,
     borderRadius: 50,
-    paddingVertical: 14,
+    padding: 16,
+    marginBottom: 15,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowColor: '#0d9a70',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
     elevation: 5,
   },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
+  outlineActionText: {
+    color: '#0d9a70',
+    fontSize: 11,
+    fontWeight: '800',
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  outlineButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.primary,
+  solidActionCard: {
+    backgroundColor: '#0d9a70',
     borderRadius: 50,
-    paddingVertical: 14,
+    padding: 14,
     alignItems: 'center',
   },
-  outlineButtonText: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1,
+  solidActionText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   activeEventCard: {
     backgroundColor: '#1a232e',
-    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
     borderRadius: 50,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 17,
     paddingHorizontal: 21,
-    marginTop: 10,
+    marginBottom: 10,
   },
-  activeEventTitle: {
-    color: '#fff',
+  activeEventName: {
+    color: '#ffffff',
     fontSize: 13,
     fontWeight: '600',
   },
-  editText: {
-    color: colors.secondary,
+  editButtonText: {
+    color: '#fa6203',
     fontSize: 13,
     fontWeight: '600',
   }

@@ -68,7 +68,7 @@ export default function AdminProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <BottomNav activeRoute="profile" isAdmin={true} />
+      <BottomNav activeRoute="profile" role="admin" />
     </View>
   );
 }
