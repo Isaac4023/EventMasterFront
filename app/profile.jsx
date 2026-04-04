@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../src/theme/colors';
 import { AppTextInput } from '../src/components/AppTextInput';
 import { BottomNav } from '../src/components/BottomNav';
@@ -7,7 +8,14 @@ import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const [profileInfo, setProfileInfo] = useState(null);
+  const [profileInfo, setProfileInfo] = useState({ name: 'Usuario Demo' });
+  const [role, setRole] = useState('user');
+
+  useEffect(() => {
+    AsyncStorage.getItem('userRole').then(r => {
+      if (r) setRole(r);
+    });
+  }, []);
 
   const handleLogout = () => {
     // TODO: Connect with Auth logout hook
@@ -57,7 +65,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <BottomNav activeRoute="profile" />
+      <BottomNav activeRoute="profile" role={role} />
     </View>
   );
 }

@@ -1,19 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, Image, StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../src/theme/colors';
 import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 
 // TODO: Populate with data from API hook
-const MOCK_EVENTS = [];
+const MOCK_EVENTS = [
+  {
+    id: '1',
+    title: 'Rock Fest 2026',
+    subtitle: 'March 28, 2026',
+    salesPercentage: 60,
+    primaryColor: '#fa6203',
+    imageUrl: 'rockfest_placeholder',
+  }
+];
 
 export default function HomeScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [role, setRole] = useState('user');
+
+  useEffect(() => {
+    AsyncStorage.getItem('userRole').then(r => {
+      if (r) setRole(r);
+    });
+  }, []);
 
   const handleEventPress = (id) => {
-    router.push(`/event-details?id=${id}`);
+    if (role === 'staff') {
+      // NOTE: availability screen doesn't exist yet natively, 
+      // maybe we do /admin-place-details? Or we create /availability
+      // Temporarily doing /availability assuming it will be created if requested
+      router.push(`/availability`);
+    } else {
+      router.push(`/event-details?id=${id}`);
+    }
   };
 
   return (
@@ -56,7 +80,7 @@ export default function HomeScreen() {
       />
 
       {/* Barra de Navegación */}
-      <BottomNav activeRoute="home" />
+      <BottomNav activeRoute="home" role={role} />
     </View>
   );
 }

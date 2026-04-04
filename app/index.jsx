@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppTextInput } from '../src/components/AppTextInput';
 import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
@@ -10,17 +11,24 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // TODO: REMOVE BEFORE MERGE - Credenciales de prueba exclusivas para navegar en UI
     if (email.trim() === 'test@test.com' && password === '123') {
+      await AsyncStorage.setItem('userRole', 'user');
       router.replace('/home');
       return;
     }
     if (email.trim() === 'admin@test.com' && password === '123') {
+      await AsyncStorage.setItem('userRole', 'admin');
       router.replace('/admin-home');
       return;
     }
-    Alert.alert('Error', 'Prototipo: test@test.com (user) o admin@test.com (admin) / Pass: 123');
+    if (email.trim() === 'staff@test.com' && password === '123') {
+      await AsyncStorage.setItem('userRole', 'staff');
+      router.replace('/home');
+      return;
+    }
+    Alert.alert('Error', 'Prototipo: test@test.com (user), admin@test.com (admin) o staff@test.com (staff) / Pass: 123');
 
     // TODO: Connect with useAuth hook from Chuy
     console.log('Login attempt', email, password);
