@@ -10,12 +10,20 @@ import { useRouter } from 'expo-router';
 const MOCK_EVENTS = [
   {
     id: '1',
-    title: 'Rock Fest 2026',
-    subtitle: 'March 28, 2026',
-    salesPercentage: 60,
+    title: 'Tech Conference 2026',
+    subtitle: '30 de Marzo • Auditorio Central',
+    salesPercentage: 85,
+    primaryColor: '#0d9a70',
+    imageUrl: null,
+  },
+  {
+    id: '2',
+    title: 'Music Fest',
+    subtitle: '05 de Abril • Estadio Norte',
+    salesPercentage: 40,
     primaryColor: '#fa6203',
-    imageUrl: 'rockfest_placeholder',
-  }
+    imageUrl: null,
+  },
 ];
 
 export default function HomeScreen() {

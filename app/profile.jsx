@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const [profileInfo, setProfileInfo] = useState({ name: 'Usuario Demo' });
+  const [profileInfo, setProfileInfo] = useState({ name: 'John Doe' });
   const [role, setRole] = useState('user');
 
   useEffect(() => {

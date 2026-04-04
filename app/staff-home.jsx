@@ -1,28 +1,54 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlatList, Image, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { BottomNav } from '../src/components/BottomNav';
 import { EventCard } from '../src/components/EventCard';
 import { colors } from '../src/theme/colors';
 
-const MOCK_EVENTS = [
-  {
-    id: '1',
-    title: 'Rock Fest 2026',
-    subtitle: 'March 28, 2026',
-    salesPercentage: 60,
-    primaryColor: '#fa6203',
-    imageUrl: 'rockfest_placeholder',
-  }
-];
-
 export default function StaffHomeScreen() {
   const router = useRouter();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // TODO (Chuy): Replace with real API fetch
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      // const response = await fetch('https://tu-api.com/events');
+      // const data = await response.json();
+      // setEvents(data);
+
+      setTimeout(() => {
+        setEvents([
+          {
+            id: 1,
+            title: 'Rock Fest 2026',
+            subtitle: '28 de Marzo • Estadio Azteca',
+            salesPercentage: 70,
+            primaryColor: '#fa6203',
+            imageUrl: 'https://images.unsplash.com/photo-1540039155733-d7eef04c03c4?auto=format&fit=crop&q=80',
+          }
+        ]);
+        setLoading(false);
+      }, 800);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const handleEventPress = (id) => {
     router.push(`/admin-availability`);
   };
+
+  const filteredEvents = events.filter(event => 
+    event.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
@@ -45,24 +71,31 @@ export default function StaffHomeScreen() {
         />
       </View>
 
-      {/* Listado Principal */}
-      <FlatList
-        data={MOCK_EVENTS}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles. Cargando desde API...</Text>}
-        renderItem={({ item }) => (
-          <EventCard
-            title={item.title}
-            subtitle={item.subtitle}
-            salesPercentage={item.salesPercentage}
-            primaryColor={item.primaryColor}
-            imageUrl={item.imageUrl}
-            onPress={() => handleEventPress(item.id)}
-            buttonText="VER DETALLES"
-          />
-        )}
-      />
+      {/* Events List */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <Text style={{ color: '#fff' }}>Cargando eventos...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredEvents}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles.</Text>}
+          renderItem={({ item }) => (
+            <EventCard
+              title={item.title}
+              subtitle={item.subtitle}
+              salesPercentage={item.salesPercentage}
+              primaryColor={item.primaryColor}
+              imageUrl={item.imageUrl}
+              onPress={() => handleEventPress(item.id)}
+              buttonText="VER DETALLES"
+            />
+          )}
+        />
+      )}
 
       {/* Barra de Navegación */}
       <BottomNav activeRoute="home" role="staff" />

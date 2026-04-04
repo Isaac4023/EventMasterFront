@@ -9,17 +9,16 @@ export default function EventDetailsScreen() {
   // Aquí se podrían extraer parámetros reales en un futuro:
   // const { id } = useLocalSearchParams();
 
-  // Datos quemados para simular el diseño según Figma
+  // Datos del evento (TODO Chuy: reemplazar con params reales de la API)
   const mockEvent = {
-    title: 'Tech Conference 2026',
-    date: '30 de Marzo, 2026 • 09:00 AM',
-    description: 'Únete a la conferencia tecnológica más importante del año con speakers internacionales.',
-    imageUrl: null, // Sin imagen, usaremos fallback
+    title: 'Rock Fest 2026',
+    date: '28 de Marzo, 2026 • 20:00',
+    description: 'El festival de rock más esperado del año. Artistas internacionales, sonido de clase mundial y una noche inolvidable en el Estadio Azteca.',
+    imageUrl: null,
   };
 
   const handleReserve = () => {
-    // TODO: Navigate to ticket reservation / payment
-    console.log('Navigate to ticket booking');
+    router.push('/booking-confirm');
   };
 
   return (

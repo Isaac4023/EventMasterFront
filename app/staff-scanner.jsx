@@ -40,13 +40,22 @@ export default function StaffScannerScreen() {
   };
 
   // Also triggered by pressing Verify Ticket
-  const processScan = () => {
+  const processScan = async () => {
     setLoading(true);
-    // Mock API call: wait 2 seconds, then show Authorized
-    setTimeout(() => {
+    try {
+      // TODO (Chuy): Replace with real API call
+      // const response = await fetch('YOUR_API_URL/verify', { method: 'POST', body: JSON.stringify({ ticketData: '...' }) });
+      // const data = await response.json();
+
+      // Mock API call: wait 2 seconds, then show Authorized
+      setTimeout(() => {
+        setLoading(false);
+        setShowResultModal(true);
+      }, 2000);
+    } catch (error) {
+      console.error('Error verifying ticket:', error);
       setLoading(false);
-      setShowResultModal(true);
-    }, 2000);
+    }
   };
 
   const resetScanner = () => {
