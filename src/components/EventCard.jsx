@@ -8,7 +8,8 @@ export const EventCard = ({
   salesPercentage, // Ej: 60 (para 60%)
   primaryColor = '#fa6203', // Naranja por defecto
   imageUrl,
-  onPress 
+  onPress,
+  buttonText = 'VER BOLETOS'
 }) => {
   return (
     <View style={styles.card}>
@@ -31,7 +32,7 @@ export const EventCard = ({
         </View>
 
         <TouchableOpacity style={styles.button} onPress={onPress}>
-          <Text style={styles.buttonText}>VER BOLETOS</Text>
+          <Text style={styles.buttonText}>{buttonText}</Text>
         </TouchableOpacity>
       </View>
     </View>

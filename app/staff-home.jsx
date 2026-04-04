@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, Image, StatusBar } from 'react-native';
-import { colors } from '../src/theme/colors';
-import { EventCard } from '../src/components/EventCard';
-import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { FlatList, Image, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { BottomNav } from '../src/components/BottomNav';
+import { EventCard } from '../src/components/EventCard';
+import { colors } from '../src/theme/colors';
 
 const MOCK_EVENTS = [
   {
@@ -21,13 +21,13 @@ export default function StaffHomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleEventPress = (id) => {
-    router.push(`/availability`);
+    router.push(`/admin-availability`);
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>EVENT MASTER</Text>
@@ -36,7 +36,7 @@ export default function StaffHomeScreen() {
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <Image source={require('../assets/images/lupa.png')} style={styles.searchIcon} resizeMode="contain" />
-        <TextInput 
+        <TextInput
           style={styles.searchInput}
           placeholder="Buscar eventos..."
           placeholderTextColor={colors.text}
@@ -52,13 +52,14 @@ export default function StaffHomeScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles. Cargando desde API...</Text>}
         renderItem={({ item }) => (
-          <EventCard 
+          <EventCard
             title={item.title}
             subtitle={item.subtitle}
             salesPercentage={item.salesPercentage}
             primaryColor={item.primaryColor}
             imageUrl={item.imageUrl}
             onPress={() => handleEventPress(item.id)}
+            buttonText="VER DETALLES"
           />
         )}
       />
