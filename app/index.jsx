@@ -25,7 +25,7 @@ export default function LoginScreen() {
     }
     if (email.trim() === 'staff@test.com' && password === '123') {
       await AsyncStorage.setItem('userRole', 'staff');
-      router.replace('/home');
+      router.replace('/staff-home');
       return;
     }
     Alert.alert('Error', 'Prototipo: test@test.com (user), admin@test.com (admin) o staff@test.com (staff) / Pass: 123');

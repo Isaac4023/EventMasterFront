@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Modal, ActivityIndicator, TextInput } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { colors } from '../src/theme/colors';
 import { BottomNav } from '../src/components/BottomNav';
@@ -11,6 +11,7 @@ export default function StaffScannerScreen() {
   const [loading, setLoading] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [role, setRole] = useState('user');
+  const [manualId, setManualId] = useState('');
 
   useEffect(() => {
     AsyncStorage.getItem('userRole').then(r => {
@@ -80,9 +81,15 @@ export default function StaffScannerScreen() {
         </View>
 
         {/* MANUAL INPUT (Mock) */}
-        <View style={styles.manualInputContainer}>
-          <Text style={styles.manualInputText}>Manual Entry ID</Text>
-        </View>
+        <TextInput 
+          style={styles.manualInputContainer}
+          placeholder="Manual Entry ID"
+          placeholderTextColor={colors.textSecondary}
+          value={manualId}
+          onChangeText={setManualId}
+          textAlign="center"
+          color={colors.text}
+        />
 
         {/* VERIFY BUTTON */}
         <TouchableOpacity 

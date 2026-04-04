@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, Image, StatusBar } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../src/theme/colors';
 import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 
-// TODO: Populate with data from API hook
 const MOCK_EVENTS = [
   {
     id: '1',
@@ -18,19 +16,12 @@ const MOCK_EVENTS = [
   }
 ];
 
-export default function HomeScreen() {
+export default function StaffHomeScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [role, setRole] = useState('user');
-
-  useEffect(() => {
-    AsyncStorage.getItem('userRole').then(r => {
-      if (r) setRole(r);
-    });
-  }, []);
 
   const handleEventPress = (id) => {
-    router.push(`/event-details?id=${id}`);
+    router.push(`/availability`);
   };
 
   return (
@@ -73,7 +64,7 @@ export default function HomeScreen() {
       />
 
       {/* Barra de Navegación */}
-      <BottomNav activeRoute="home" role={role} />
+      <BottomNav activeRoute="home" role="staff" />
     </View>
   );
 }
@@ -84,7 +75,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingTop: 60, // Compensar el notch/barra de estado
+    paddingTop: 60,
     paddingBottom: 20,
     alignItems: 'center',
   },
@@ -116,16 +107,14 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.text,
     fontSize: 14,
-    fontWeight: '300',
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100, // Espacio para que el BottomNav no tape los ultimos items
+    paddingBottom: 100,
   },
   emptyText: {
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 40,
-    fontSize: 14,
   }
 });

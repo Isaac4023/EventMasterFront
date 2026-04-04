@@ -20,7 +20,7 @@ export const BottomNav = ({ activeRoute = 'home', role = 'user' }) => {
   ];
 
   const staffNavItems = [
-    { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/home' },
+    { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/staff-home' },
     { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/staff-scanner' },
     { id: 'profile', title: 'Perfil', icon: require('../../assets/images/user.png'), route: '/profile' },
   ];
