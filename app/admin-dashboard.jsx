@@ -8,15 +8,8 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // TODO (Chuy): Alimentar estos estados al cargar la pantalla
-  const [events, setEvents] = useState([
-    {
-      id: '1',
-      title: 'Rock Fest 2026',
-      subtitle: '28 de Marzo • Estadio Azteca',
-      capacityPercentage: 70,
-    },
-  ]);
+  // TODO (Chuy): Poblar con eventos reales desde la API
+  const [events, setEvents] = useState([]);
 
   const filteredEvents = events.filter(event => 
     event.title.toLowerCase().includes(searchQuery.toLowerCase())

@@ -6,15 +6,13 @@ import { BottomNav } from '../src/components/BottomNav';
 
 export default function AdminHomeScreen() {
   const router = useRouter();
-  // TODO (Chuy): Consume API for admin dashboard data
+  // TODO (Chuy): Poblar con datos reales del panel de admin
   const [stats, setStats] = useState({
-    ventas: '$15.4k',
-    aforo: '85%'
+    ventas: '',
+    aforo: ''
   });
   
-  const [activeEvents, setActiveEvents] = useState([
-    { id: '1', name: 'Concierto Rock' }
-  ]);
+  const [activeEvents, setActiveEvents] = useState([]);
 
   return (
     <View style={styles.container}>
