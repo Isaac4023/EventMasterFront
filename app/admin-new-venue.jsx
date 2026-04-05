@@ -1,32 +1,62 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Modal, Image } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView,
+  TouchableOpacity, StatusBar, Image,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../src/theme/colors';
 import { AppTextInput } from '../src/components/AppTextInput';
 
-const CITIES = ['Mexico City, MX', 'Guadalajara, JAL', 'Monterrey, NL', 'Cancun, QR'];
-
 export default function AdminNewVenueScreen() {
   const router = useRouter();
   const [image, setImage] = useState(null);
 
+  // ── Campos requeridos por POST /places ────────────────────────────────────
+  const [name, setName]           = useState('');
+  const [maxCapacity, setMaxCapacity] = useState('');
+
+  // location → GeoJSON { type: "Point", coordinates: [lng, lat] }
+  const [latitude, setLatitude]   = useState('');
+  const [longitude, setLongitude] = useState('');
+
+  // address (requerido en el schema)
+  const [street, setStreet]       = useState('');
+  const [city, setCity]           = useState('');
+  const [state, setState]         = useState('');
+  const [country, setCountry]     = useState('');
+  const [zipCode, setZipCode]     = useState('');
+
+  // Opcionales
+  const [contactPhone, setContactPhone] = useState('');
+
+  // ── Image picker ──────────────────────────────────────────────────────────
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [16, 9],
       quality: 1,
     });
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    if (!result.canceled) setImage(result.assets[0].uri);
   };
+
+  // TODO (Chuy): Usar este payload en POST /places con el JWT en el header
+  // const payload = {
+  //   name,
+  //   maxCapacity: Number(maxCapacity),
+  //   location: {
+  //     type: "Point",
+  //     coordinates: [Number(longitude), Number(latitude)],  // ← [lng, lat] orden GeoJSON
+  //   },
+  //   address: { street, city, state, country, zipCode },
+  //   contactPhone,   // opcional
+  // };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
@@ -37,7 +67,7 @@ export default function AdminNewVenueScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Image Upload Area */}
+        {/* Image Upload */}
         <TouchableOpacity style={styles.imageUploadArea} onPress={pickImage}>
           {image ? (
             <Image source={{ uri: image }} style={styles.previewImage} />
@@ -51,63 +81,128 @@ export default function AdminNewVenueScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Form Fields */}
+        {/* ── Form ─────────────────────────────────────────────────────────── */}
         <View style={styles.formContainer}>
-          <Text style={styles.fieldLabel}>VENUE NAME</Text>
-          <AppTextInput placeholder="Ej. Estadio Metropolitano" />
 
-          <Text style={styles.fieldLabel}>LOCATION</Text>
-          <AppTextInput placeholder="Dirección / Ciudad" />
-          
-          <Text style={styles.fieldLabel}>CAPACITY</Text>
-          <AppTextInput placeholder="Ej. 5000" keyboardType="numeric" />
+          {/* Name */}
+          <Text style={styles.fieldLabel}>VENUE NAME</Text>
+          <AppTextInput
+            placeholder="Ej. Estadio Metropolitano"
+            value={name}
+            onChangeText={setName}
+          />
+
+          {/* Capacity */}
+          <Text style={styles.fieldLabel}>MAX CAPACITY</Text>
+          <AppTextInput
+            placeholder="Ej. 22000"
+            value={maxCapacity}
+            onChangeText={setMaxCapacity}
+            keyboardType="numeric"
+          />
+
+          {/* ── Coordinates (GeoJSON requerido por la API) ────────────────── */}
+          <Text style={styles.sectionLabel}>COORDENADAS (GEOLOCALIZACIÓN)</Text>
+          <Text style={styles.hint}>
+            Puedes obtenerlas en Google Maps → clic derecho sobre el lugar.
+          </Text>
+
+          <Text style={styles.fieldLabel}>LATITUD</Text>
+          <AppTextInput
+            placeholder="Ej. 19.4975"
+            value={latitude}
+            onChangeText={setLatitude}
+            keyboardType="decimal-pad"
+          />
+
+          <Text style={styles.fieldLabel}>LONGITUD</Text>
+          <AppTextInput
+            placeholder="Ej. -99.1764"
+            value={longitude}
+            onChangeText={setLongitude}
+            keyboardType="decimal-pad"
+          />
+
+          {/* ── Address ───────────────────────────────────────────────────── */}
+          <Text style={styles.sectionLabel}>DIRECCIÓN</Text>
+
+          <Text style={styles.fieldLabel}>CALLE Y NÚMERO</Text>
+          <AppTextInput
+            placeholder="Ej. Av. de las Granjas 800"
+            value={street}
+            onChangeText={setStreet}
+          />
+
+          <Text style={styles.fieldLabel}>CIUDAD</Text>
+          <AppTextInput
+            placeholder="Ej. CDMX"
+            value={city}
+            onChangeText={setCity}
+          />
+
+          <Text style={styles.fieldLabel}>ESTADO</Text>
+          <AppTextInput
+            placeholder="Ej. Azcapotzalco"
+            value={state}
+            onChangeText={setState}
+          />
+
+          <Text style={styles.fieldLabel}>PAÍS</Text>
+          <AppTextInput
+            placeholder="Ej. México"
+            value={country}
+            onChangeText={setCountry}
+          />
+
+          <Text style={styles.fieldLabel}>CÓDIGO POSTAL</Text>
+          <AppTextInput
+            placeholder="Ej. 02250"
+            value={zipCode}
+            onChangeText={setZipCode}
+            keyboardType="numeric"
+          />
+
+          {/* ── Opcionales ────────────────────────────────────────────────── */}
+          <Text style={styles.sectionLabel}>CONTACTO (OPCIONAL)</Text>
+
+          <Text style={styles.fieldLabel}>TELÉFONO</Text>
+          <AppTextInput
+            placeholder="Ej. +525512345678"
+            value={contactPhone}
+            onChangeText={setContactPhone}
+            keyboardType="phone-pad"
+          />
+
         </View>
 
-        {/* Button */}
+        {/* Submit */}
         <TouchableOpacity style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>+ CREATE VENUE</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 50 },
   header: {
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingTop: 60, paddingBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 40, height: 40,
+    justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 20,
   },
-  backText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   headerTitle: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    color: colors.primary, fontSize: 14,
+    fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
   },
   imageUploadArea: {
     backgroundColor: '#1e293b',
@@ -116,92 +211,45 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderRadius: 24,
     height: 144,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 25,
-    overflow: 'hidden',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 25, overflow: 'hidden',
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
+  previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   uploadIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: 2, borderColor: '#fff',
+    justifyContent: 'center', alignItems: 'center',
     marginBottom: 8,
   },
-  uploadIconText: {
-    color: '#fff',
-    fontSize: 20,
-    lineHeight: 22,
-  },
-  uploadHint: {
+  uploadIconText: { color: '#fff', fontSize: 20, lineHeight: 22 },
+  uploadHint: { color: colors.primary, fontSize: 10, fontWeight: '900' },
+  formContainer: { gap: 6 },
+  sectionLabel: {
     color: colors.primary,
-    fontSize: 10,
-    fontWeight: '900',
-  },
-  formContainer: {
-    gap: 5,
+    fontSize: 10, fontWeight: '900',
+    letterSpacing: 1.5, textTransform: 'uppercase',
+    marginTop: 20, marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(13,154,112,0.3)',
+    paddingBottom: 6,
   },
   fieldLabel: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginTop: 10,
-    marginBottom: 5,
-    marginLeft: 5,
+    color: '#94a3b8', fontSize: 10,
+    fontWeight: '700', letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginTop: 10, marginLeft: 4,
+  },
+  hint: {
+    color: '#475569', fontSize: 11,
+    marginBottom: 4, marginLeft: 4,
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    borderRadius: 50,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 30,
+    borderRadius: 50, paddingVertical: 15,
+    alignItems: 'center', marginTop: 30,
   },
   primaryButtonText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    color: '#fff', fontSize: 11,
+    fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#1e293b',
-    width: '80%',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  modalTitle: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  modalItem: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  modalItemText: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
-  }
 });
