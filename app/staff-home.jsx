@@ -19,19 +19,11 @@ export default function StaffHomeScreen() {
       // const data = await response.json();
       // setEvents(data);
 
+  // TODO (Chuy): Poblar con eventos reales de la API
       setTimeout(() => {
-        setEvents([
-          {
-            id: 1,
-            title: 'Rock Fest 2026',
-            subtitle: '28 de Marzo • Estadio Azteca',
-            salesPercentage: 70,
-            primaryColor: '#fa6203',
-            imageUrl: 'https://images.unsplash.com/photo-1540039155733-d7eef04c03c4?auto=format&fit=crop&q=80',
-          }
-        ]);
+        setEvents([]);
         setLoading(false);
-      }, 800);
+      }, 0);
     } catch (error) {
       console.error('Error fetching events:', error);
       setLoading(false);

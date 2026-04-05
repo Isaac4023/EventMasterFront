@@ -4,21 +4,8 @@ import { colors } from '../src/theme/colors';
 import { TicketCard } from '../src/components/TicketCard';
 import { BottomNav } from '../src/components/BottomNav';
 
-// TODO: Populate with data from API hook
-const MOCK_RESERVATIONS = [
-  {
-    id: '1',
-    title: 'Rock Fest',
-    date: 'March 28, 2026',
-    status: 'active',
-  },
-  {
-    id: '2',
-    title: 'Tech Expo',
-    date: 'Completed',
-    status: 'completed',
-  },
-];
+// TODO (Chuy): Poblar con reservaciones reales del usuario autenticado
+const MOCK_RESERVATIONS = [];
 
 export default function TicketsScreen() {
   const [reservations, setReservations] = useState(MOCK_RESERVATIONS);

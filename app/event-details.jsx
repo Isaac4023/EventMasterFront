@@ -9,11 +9,11 @@ export default function EventDetailsScreen() {
   // Aquí se podrían extraer parámetros reales en un futuro:
   // const { id } = useLocalSearchParams();
 
-  // Datos del evento (TODO Chuy: reemplazar con params reales de la API)
+  // TODO (Chuy): Reemplazar con datos del evento recibidos por params o desde la API
   const mockEvent = {
-    title: 'Rock Fest 2026',
-    date: '28 de Marzo, 2026 • 20:00',
-    description: 'El festival de rock más esperado del año. Artistas internacionales, sonido de clase mundial y una noche inolvidable en el Estadio Azteca.',
+    title: '',
+    date: '',
+    description: '',
     imageUrl: null,
   };
 

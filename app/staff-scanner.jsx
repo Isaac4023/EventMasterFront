@@ -130,16 +130,17 @@ export default function StaffScannerScreen() {
                <Text style={styles.successIconText}>✓</Text>
              </View>
 
+             {/* TODO (Chuy): Reemplazar con datos reales del ticket verificado */}
              <Text style={styles.authorizedTitle}>¡AUTORIZADO!</Text>
 
              <View style={styles.userInfo}>
-               <Text style={styles.userName}>Juan Pérez</Text>
-               <Text style={styles.userSection}>Zona VIP • Fila 4</Text>
+               <Text style={styles.userName}>{/* nombre del titular */}</Text>
+               <Text style={styles.userSection}>{/* zona y fila */}</Text>
              </View>
 
              <View style={styles.capacityCard}>
                <Text style={styles.capacityLabel}>AFORO ACTUAL</Text>
-               <Text style={styles.capacityNumbers}>142 / 200</Text>
+               <Text style={styles.capacityNumbers}>{/* actual / max */}</Text>
              </View>
 
              <TouchableOpacity style={styles.nextScanBtn} onPress={resetScanner}>

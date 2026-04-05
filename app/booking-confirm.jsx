@@ -8,12 +8,12 @@ import { colors } from '../src/theme/colors';
 export default function BookingConfirmScreen() {
   const router = useRouter();
 
-  // TODO (Chuy): Recibir datos del evento via params de la API
+  // TODO (Chuy): Recibir datos reales del evento vía params (id) y la API
   const mockEvent = {
-    name: 'Rock Fest 2026',
-    date: 'March 28, 2026',
-    ticketsSold: 70,
-    ticketsTotal: 100,
+    name: '',
+    date: '',
+    ticketsSold: 0,
+    ticketsTotal: 0,
   };
 
   const [quantity, setQuantity] = useState(1);

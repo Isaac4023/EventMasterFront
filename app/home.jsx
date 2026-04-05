@@ -6,25 +6,8 @@ import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 
-// TODO: Populate with data from API hook
-const MOCK_EVENTS = [
-  {
-    id: '1',
-    title: 'Tech Conference 2026',
-    subtitle: '30 de Marzo • Auditorio Central',
-    salesPercentage: 85,
-    primaryColor: '#0d9a70',
-    imageUrl: null,
-  },
-  {
-    id: '2',
-    title: 'Music Fest',
-    subtitle: '05 de Abril • Estadio Norte',
-    salesPercentage: 40,
-    primaryColor: '#fa6203',
-    imageUrl: null,
-  },
-];
+// TODO (Chuy): Poblar con datos reales del endpoint GET /event
+const MOCK_EVENTS = [];
 
 export default function HomeScreen() {
   const router = useRouter();
