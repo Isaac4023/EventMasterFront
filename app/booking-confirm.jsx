@@ -8,20 +8,27 @@ import { colors } from '../src/theme/colors';
 export default function BookingConfirmScreen() {
   const router = useRouter();
 
-  // TODO (Chuy): Recibir datos reales del evento vía params (id) y la API
+  // TODO (Chuy): Recibir id del evento vía params.
+  // Llamar GET /event/{id}/availability para obtener zonas disponibles.
+  // Response: { eventId, title, status, totalCapacity, totalAvailable,
+  //   zones: [{ name, capacity, occupied, available, price }] }
   const mockEvent = {
     name: '',
     date: '',
-    ticketsSold: 0,
-    ticketsTotal: 0,
+    totalCapacity: 0,
+    totalAvailable: 0,
+    zones: [],   // ← { name, capacity, occupied, available, price }
   };
 
   const [quantity, setQuantity] = useState(1);
 
-  const increment = () => setQuantity(prev => Math.min(prev + 1, mockEvent.ticketsTotal - mockEvent.ticketsSold));
+  const totalOccupied = mockEvent.totalCapacity - mockEvent.totalAvailable;
+  const increment = () => setQuantity(prev => Math.min(prev + 1, mockEvent.totalAvailable || 1));
   const decrement = () => setQuantity(prev => Math.max(prev - 1, 1));
 
-  const soldPercent = (mockEvent.ticketsSold / mockEvent.ticketsTotal) * 100;
+  const soldPercent = mockEvent.totalCapacity > 0
+    ? (totalOccupied / mockEvent.totalCapacity) * 100
+    : 0;
 
   const handleConfirm = () => {
     // TODO (Chuy): POST a la API para crear reserva
@@ -52,7 +59,7 @@ export default function BookingConfirmScreen() {
 
         {/* Tickets sold label */}
         <Text style={styles.ticketsLabel}>
-          {mockEvent.ticketsSold}/{mockEvent.ticketsTotal} Tickets Sold
+          {totalOccupied}/{mockEvent.totalCapacity} Tickets Sold
         </Text>
 
         {/* Counter — fondo naranja translúcido como en Figma */}

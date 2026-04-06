@@ -6,7 +6,10 @@ import { colors } from '../src/theme/colors';
 export default function AdminAvailabilityScreen() {
   const router = useRouter();
   
-  // TODO (Chuy): Fetch calendar availability from DB/Axios
+  // TODO (Chuy): Ahora existen endpoints reales:
+  //   GET /event/{id}/availability → zonas con capacity/occupied/available/price
+  //   GET /places/{id}/availability?date=YYYY-MM-DD → eventos en esa sede por fecha
+  // Usa el segundo para poblar calendarDays y bookings.
   const [calendarDays, setCalendarDays] = useState([]);
   const [bookings, setBookings] = useState([]);
 

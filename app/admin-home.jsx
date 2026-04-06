@@ -6,7 +6,9 @@ import { BottomNav } from '../src/components/BottomNav';
 
 export default function AdminHomeScreen() {
   const router = useRouter();
-  // TODO (Chuy): Poblar con datos reales del panel de admin
+  // TODO (Chuy): Poblar con GET /event (filtrar status !== 'cancelled')
+  // Cada evento: { _id, title, status, totalCapacity, zones }
+  // Para stats: calcular aforo sumando zones.occupied / totalCapacity de todos los eventos
   const [stats, setStats] = useState({
     ventas: '',
     aforo: ''
@@ -63,8 +65,8 @@ export default function AdminHomeScreen() {
           <Text style={styles.sectionTitle}>Eventos Activos</Text>
           
           {activeEvents.map((event) => (
-            <View key={event.id} style={styles.activeEventCard}>
-              <Text style={styles.activeEventName}>{event.name}</Text>
+            <View key={event._id} style={styles.activeEventCard}>
+              <Text style={styles.activeEventName}>{event.title}</Text>
               <TouchableOpacity onPress={() => router.push('/admin-place-details')}>
                 <Text style={styles.editButtonText}>EDIT</Text>
               </TouchableOpacity>

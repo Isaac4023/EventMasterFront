@@ -11,19 +11,16 @@ export default function StaffHomeScreen() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // TODO (Chuy): Replace with real API fetch
+  // TODO (Chuy): Llamar GET /event y poblar el array
+  // Cada evento: { _id, title, description, location, startTime, endTime,
+  //   status, totalCapacity, zones: [{ name, capacity, occupied, price }] }
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      // const response = await fetch('https://tu-api.com/events');
-      // const data = await response.json();
-      // setEvents(data);
-
-  // TODO (Chuy): Poblar con eventos reales de la API
-      setTimeout(() => {
-        setEvents([]);
-        setLoading(false);
-      }, 0);
+      // const res = await api.get('/event');
+      // setEvents(res.data);
+      setEvents([]);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching events:', error);
       setLoading(false);
@@ -34,12 +31,12 @@ export default function StaffHomeScreen() {
     fetchEvents();
   }, []);
 
-  const handleEventPress = (id) => {
-    router.push(`/admin-availability`);
+  const handleEventPress = (eventId) => {
+    router.push('/staff-scanner');
   };
 
   const filteredEvents = events.filter(event => 
-    event.title.toLowerCase().includes(searchQuery.toLowerCase())
+    (event.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -71,18 +68,18 @@ export default function StaffHomeScreen() {
       ) : (
         <FlatList
           data={filteredEvents}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item._id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles.</Text>}
           renderItem={({ item }) => (
             <EventCard
               title={item.title}
-              subtitle={item.subtitle}
-              salesPercentage={item.salesPercentage}
-              primaryColor={item.primaryColor}
+              subtitle={`${item.location || ''} • ${item.startTime ? new Date(item.startTime).toLocaleDateString() : ''}`}
+              salesPercentage={item.totalCapacity ? Math.round(((item.zones || []).reduce((s, z) => s + (z.occupied || 0), 0) / item.totalCapacity) * 100) : 0}
+              primaryColor={'#fa6203'}
               imageUrl={item.imageUrl}
-              onPress={() => handleEventPress(item.id)}
+              onPress={() => handleEventPress(item._id)}
               buttonText="VER DETALLES"
             />
           )}

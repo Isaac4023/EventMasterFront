@@ -74,13 +74,16 @@ export default function AdminNewEventScreen() {
   };
 
   // ── Build payload (para referencia del equipo de integración) ─────────────
-  // TODO (Chuy): Usar este payload en POST /event/new con el JWT en el header
+  // TODO (Chuy): Usar este payload en POST /event/new con el JWT en header x-auth-token
+  // La API usa totalCapacity (NO capacity). description y status son opcionales.
   // const payload = {
   //   title,
+  //   description,
   //   startTime: toISO(startDate, startTimeText),   // ISO 8601
   //   endTime:   toISO(endDate,   endTimeText),      // ISO 8601  ← OBLIGATORIO
   //   location,
-  //   capacity:  Number(capacity),
+  //   totalCapacity: Number(capacity),               // ← API usa totalCapacity
+  //   status: 'published',                           // published | suspended
   // };
 
   return (

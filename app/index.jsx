@@ -30,7 +30,12 @@ export default function LoginScreen() {
     }
     Alert.alert('Error', 'Prototipo: test@test.com (user), admin@test.com (admin) o staff@test.com (staff) / Pass: 123');
 
-    // TODO: Connect with useAuth hook from Chuy
+    // TODO (Chuy): POST /auth/login con { email, password }
+    // Response 200: { _id, name, email, role, accountType, options, token }
+    // ✅ La API ahora SÍ devuelve el "role" en el login.
+    // 1. Guardar token en SecureStore
+    // 2. Guardar role en AsyncStorage
+    // 3. router.replace según role → /home | /admin-home | /staff-home
     console.log('Login attempt', email, password);
   };
 

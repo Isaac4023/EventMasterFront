@@ -8,11 +8,13 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // TODO (Chuy): Poblar con eventos reales desde la API
+  // TODO (Chuy): Poblar con eventos reales desde GET /event
+  // Cada evento: { _id, title, description, location, startTime, endTime,
+  //   status, totalCapacity, zones: [{ name, capacity, occupied, price }] }
   const [events, setEvents] = useState([]);
 
   const filteredEvents = events.filter(event => 
-    event.title.toLowerCase().includes(searchQuery.toLowerCase())
+    (event.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

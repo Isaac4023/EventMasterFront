@@ -12,7 +12,10 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
 
   const handleRegister = () => {
-    // TODO: Connect with useAuth hook from Chuy
+    // TODO (Chuy): POST /auth/register con { name, email, password }
+    // ⚠️ La API ya NO devuelve token en el registro.
+    // Response 201: { _id, name, email, role, accountType }
+    // Tras éxito → mostrar Alert de confirmación y router.replace('/') para ir a login.
     console.log('Register attempt', name, email, password);
   };
 

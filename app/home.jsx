@@ -7,6 +7,8 @@ import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 
 // TODO (Chuy): Poblar con datos reales del endpoint GET /event
+// Cada evento de la API trae: { _id, title, description, location, startTime, endTime,
+//   status, totalCapacity, zones: [{ name, capacity, occupied, price }], createdBy: { _id, name } }
 const MOCK_EVENTS = [];
 
 export default function HomeScreen() {
@@ -48,17 +50,17 @@ export default function HomeScreen() {
       {/* Listado Principal */}
       <FlatList
         data={MOCK_EVENTS}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles. Cargando desde API...</Text>}
         renderItem={({ item }) => (
           <EventCard 
             title={item.title}
-            subtitle={item.subtitle}
-            salesPercentage={item.salesPercentage}
-            primaryColor={item.primaryColor}
+            subtitle={`${item.location} • ${item.startTime ? new Date(item.startTime).toLocaleDateString() : ''}`}
+            salesPercentage={item.totalCapacity ? Math.round(((item.zones || []).reduce((s, z) => s + (z.occupied || 0), 0) / item.totalCapacity) * 100) : 0}
+            primaryColor={'#fa6203'}
             imageUrl={item.imageUrl}
-            onPress={() => handleEventPress(item.id)}
+            onPress={() => handleEventPress(item._id)}
           />
         )}
       />

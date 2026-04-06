@@ -9,11 +9,19 @@ export default function EventDetailsScreen() {
   // Aquí se podrían extraer parámetros reales en un futuro:
   // const { id } = useLocalSearchParams();
 
-  // TODO (Chuy): Reemplazar con datos del evento recibidos por params o desde la API
+  // TODO (Chuy): Llamar GET /event/${id} y poblar con la respuesta
+  // Response: { _id, title, description, location, startTime, endTime,
+  //   status, totalCapacity, zones: [{ name, capacity, occupied, price }],
+  //   createdBy: { _id, name } }
   const mockEvent = {
     title: '',
-    date: '',
     description: '',
+    location: '',
+    startTime: '',
+    endTime: '',
+    status: '',
+    totalCapacity: 0,
+    zones: [],           // ← cada zona tiene { name, capacity, occupied, price }
     imageUrl: null,
   };
 
@@ -44,7 +52,7 @@ export default function EventDetailsScreen() {
 
         {/* Información del evento */}
         <Text style={styles.title}>{mockEvent.title}</Text>
-        <Text style={styles.date}>{mockEvent.date}</Text>
+        <Text style={styles.date}>{mockEvent.startTime ? new Date(mockEvent.startTime).toLocaleDateString() : ''} • {mockEvent.location}</Text>
         <Text style={styles.description}>{mockEvent.description}</Text>
 
         {/* Botón de Reserva personalizado con color naranja (Figma: #fa6203) */}

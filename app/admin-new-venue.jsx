@@ -41,7 +41,8 @@ export default function AdminNewVenueScreen() {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  // TODO (Chuy): Usar este payload en POST /places con el JWT en el header
+  // TODO (Chuy): Usar este payload en POST /places con JWT en header x-auth-token
+  // Requiere rol admin. La API también acepta defaultZones y amenities (opcionales).
   // const payload = {
   //   name,
   //   maxCapacity: Number(maxCapacity),
@@ -50,7 +51,9 @@ export default function AdminNewVenueScreen() {
   //     coordinates: [Number(longitude), Number(latitude)],  // ← [lng, lat] orden GeoJSON
   //   },
   //   address: { street, city, state, country, zipCode },
-  //   contactPhone,   // opcional
+  //   contactPhone,       // opcional
+  //   defaultZones: [],   // opcional: [{ name: "VIP", capacity: 5000, description: "..." }]
+  //   amenities: [],      // opcional: ["Parking", "WiFi", "Accesibilidad"]
   // };
 
   return (
