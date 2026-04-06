@@ -1,67 +1,121 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from 'react-native';
+
 import { AppTextInput } from '../src/components/AppTextInput';
 import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
 import { useRouter } from 'expo-router';
 
+// 🔥 NUEVO
+import useForm from '../src/hooks/useForm';
+import api from '../src/services/api';
+import StorageService from '../src/helpers/StorageService';
+
 export default function RegisterScreen() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
-  const handleRegister = () => {
-    // TODO: Connect with useAuth hook from Chuy
-    console.log('Register attempt', name, email, password);
+  const { values, handleChange, validateForm, resetForm } = useForm({
+    name: '',
+    email: '',
+    password: '',
+  });
+
+  const handleRegister = async () => {
+    if (!validateForm()) return;
+
+    try {
+      // 🧾 REGISTER
+      const res = await api.post('/auth/register', values);
+
+      const token = res.data.token;
+
+      // 🔐 Guardar token
+      await StorageService.saveToken(token);
+
+      // 👤 Obtener perfil
+      const profileRes = await api.get('/auth/me');
+      const profile = profileRes.data;
+
+      // 💾 Guardar en AsyncStorage
+      await StorageService.setItem('userProfile', profile);
+
+      // ⚠️ TEMP hasta que backend mande role
+      const role = profile.role || 'user';
+      await StorageService.setItem('userRole', role);
+
+      // 🔄 Reset form
+      resetForm();
+
+      // 🚀 Redirigir
+      router.replace('/home');
+
+    } catch (error) {
+      console.error(error);
+
+      Alert.alert(
+        'Register error',
+        error?.response?.data?.msg || 'Something went wrong'
+      );
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-           <Image 
-             source={require('../assets/images/logo_EventMaster.png')} 
-             style={styles.logo} 
-             resizeMode="contain"
-           />
+          <Image
+            source={require('../assets/images/logo_EventMaster.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>Crea tu cuenta</Text>
-        
-        <AppTextInput 
-          placeholder="Nombre completo" 
-          value={name}
-          onChangeText={setName}
+
+        <AppTextInput
+          placeholder="Nombre completo"
+          value={values.name}
+          onChangeText={(text) => handleChange('name', text)}
           autoCapitalize="words"
         />
 
-        <AppTextInput 
-          placeholder="Email" 
-          value={email}
-          onChangeText={setEmail}
+        <AppTextInput
+          placeholder="Email"
+          value={values.email}
+          onChangeText={(text) => handleChange('email', text)}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        
-        <AppTextInput 
-          placeholder="Password" 
-          value={password}
-          onChangeText={setPassword}
+
+        <AppTextInput
+          placeholder="Password"
+          value={values.password}
+          onChangeText={(text) => handleChange('password', text)}
           secureTextEntry
         />
-        
-        <AppButton 
-          title="Registrarse" 
-          onPress={handleRegister} 
+
+        <AppButton
+          title="Registrarse"
+          onPress={handleRegister}
           style={styles.registerButton}
         />
-        
+
         <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
+          <Text style={styles.loginText}>
+            ¿Ya tienes cuenta?{' '}
+          </Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.loginLink}>Ingresa aquí</Text>
           </TouchableOpacity>
@@ -70,44 +124,3 @@ export default function RegisterScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  logoContainer: {
-    marginBottom: 40,
-    alignItems: 'center',
-  },
-  logo: {
-    width: 200,
-    height: 80,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 20,
-    marginBottom: 30,
-  },
-  registerButton: {
-    marginTop: 20,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-  },
-  loginText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  loginLink: {
-    color: colors.primary,
-    fontSize: 12,
-  },
-});

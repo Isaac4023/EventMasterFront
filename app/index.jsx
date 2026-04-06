@@ -1,78 +1,116 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from 'react-native';
+
 import { AppTextInput } from '../src/components/AppTextInput';
 import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
 import { useRouter } from 'expo-router';
 
+// 🔥 NUEVO
+import useForm from '../src/hooks/useForm';
+import api from '../src/services/api';
+import StorageService from '../src/helpers/StorageService';
+
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // 🔥 Hook de formulario
+  const { values, handleChange, validateForm } = useForm({
+    email: '',
+    password: '',
+  });
 
   const handleLogin = async () => {
-    // TODO: REMOVE BEFORE MERGE - Credenciales de prueba exclusivas para navegar en UI
-    if (email.trim() === 'test@test.com' && password === '123') {
-      await AsyncStorage.setItem('userRole', 'user');
-      router.replace('/home');
-      return;
-    }
-    if (email.trim() === 'admin@test.com' && password === '123') {
-      await AsyncStorage.setItem('userRole', 'admin');
-      router.replace('/admin-home');
-      return;
-    }
-    if (email.trim() === 'staff@test.com' && password === '123') {
-      await AsyncStorage.setItem('userRole', 'staff');
-      router.replace('/staff-home');
-      return;
-    }
-    Alert.alert('Error', 'Prototipo: test@test.com (user), admin@test.com (admin) o staff@test.com (staff) / Pass: 123');
+    if (!validateForm()) return;
 
-    // TODO: Connect with useAuth hook from Chuy
-    console.log('Login attempt', email, password);
+    try {
+      // 🔐 LOGIN
+      const res = await api.post('/auth/login', values);
+      const token = res.data.token;
+
+      // 🔐 Guardar JWT en SecureStore
+      await StorageService.saveToken(token);
+
+      // 👤 Obtener perfil
+      const profileRes = await api.get('/auth/me');
+      const profile = profileRes.data;
+
+      // 💾 Guardar en AsyncStorage
+      await StorageService.setItem('userProfile', profile);
+
+      // ⚠️ TEMP (hasta que backend mande role)
+      const role = profile.role || 'user';
+      await StorageService.setItem('userRole', role);
+
+      // 🚀 Redirección
+      if (role === 'admin') {
+        router.replace('/admin-home');
+      } else if (role === 'staff') {
+        router.replace('/staff-home');
+      } else {
+        router.replace('/home');
+      }
+
+    } catch (error) {
+      console.error(error);
+
+      Alert.alert(
+        'Login error',
+        error?.response?.data?.msg || 'Invalid credentials'
+      );
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-           <Image 
-             source={require('../assets/images/logo_EventMaster.png')} 
-             style={styles.logo} 
-             resizeMode="contain"
-           />
+          <Image
+            source={require('../assets/images/logo_EventMaster.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>Bienvenido</Text>
-        
-        <AppTextInput 
-          placeholder="Email" 
-          value={email}
-          onChangeText={setEmail}
+
+        <AppTextInput
+          placeholder="Email"
+          value={values.email}
+          onChangeText={(text) => handleChange('email', text)}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        
-        <AppTextInput 
-          placeholder="Password" 
-          value={password}
-          onChangeText={setPassword}
+
+        <AppTextInput
+          placeholder="Password"
+          value={values.password}
+          onChangeText={(text) => handleChange('password', text)}
           secureTextEntry
         />
-        
-        <AppButton 
-          title="Ingresar" 
-          onPress={handleLogin} 
+
+        <AppButton
+          title="Ingresar"
+          onPress={handleLogin}
           style={styles.loginButton}
         />
-        
+
         <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+          <Text style={styles.registerText}>
+            ¿No tienes cuenta?{' '}
+          </Text>
           <TouchableOpacity onPress={() => router.push('/register')}>
             <Text style={styles.registerLink}>Regístrate</Text>
           </TouchableOpacity>
@@ -81,44 +119,3 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  logoContainer: {
-    marginBottom: 40,
-    alignItems: 'center',
-  },
-  logo: {
-    width: 200,
-    height: 80,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 20,
-    marginBottom: 30,
-  },
-  loginButton: {
-    marginTop: 20,
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-  },
-  registerText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  registerLink: {
-    color: colors.danger,
-    fontSize: 12,
-  },
-});
