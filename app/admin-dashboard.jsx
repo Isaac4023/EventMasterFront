@@ -1,38 +1,92 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, StatusBar, TouchableOpacity, TextInput } from 'react-native';
+import { colors } from '../src/theme/colors';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 import { useEvents } from '../src/hooks/useEvents';
-import { colors } from '../src/theme/colors';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { events } = useEvents();
+  const { events, loading } = useEvents();
 
-  const filteredEvents = events.filter(event =>
+  const filteredEvents = events.filter(event => 
     (event.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView>
-        <TextInput
-          placeholder="Buscar eventos..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backText}>{'<'}</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>DASHBOARD</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-        {filteredEvents.map(event => (
-          <TouchableOpacity
-            key={event._id}
-            onPress={() => router.push(`/admin-availability?id=${event._id}`)}
-          >
-            <Text>{event.title}</Text>
-          </TouchableOpacity>
-        ))}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar eventos..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {/* Events List */}
+        <View style={styles.eventsContainer}>
+          {filteredEvents.map(event => {
+
+            // ✅ CALCULAR AQUÍ (FUERA DEL JSX)
+            const percentage = event.totalCapacity
+              ? Math.round(
+                  ((event.zones || []).reduce((s, z) => s + (z.occupied || 0), 0) /
+                    event.totalCapacity) * 100
+                )
+              : 0;
+
+            return (
+              <TouchableOpacity 
+                key={event._id}
+                style={styles.eventCard}
+                onPress={() => router.push(`/admin-availability?id=${event._id}`)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.placeholderText}>No Image</Text>
+                </View>
+                
+                <View style={styles.cardContent}>
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <Text style={styles.eventSubtitle}>{event.subtitle}</Text>
+                  
+                  <View style={styles.progressContainer}>
+                    <View style={styles.progressBarBg}>
+                      {/* ✅ USAR percentage AQUÍ */}
+                      <View style={[styles.progressBarFill, { width: `${percentage}%` }]} />
+                    </View>
+                    <Text style={styles.progressText}>{percentage}% Capacity</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+
+          {filteredEvents.length === 0 && (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{color: '#94a3b8'}}>
+                {loading ? 'Cargando eventos...' : 'No se encontraron eventos.'}
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       <BottomNav activeRoute="tickets" role="admin" />

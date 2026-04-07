@@ -15,7 +15,6 @@ import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
 import { useRouter } from 'expo-router';
 
-// 🔥 NUEVO
 import { useAuth } from '../src/hooks/useAuth';
 import { validators } from '../src/utils/validators';
 

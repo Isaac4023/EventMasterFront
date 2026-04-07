@@ -1,78 +1,98 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../src/theme/colors';
 import { AppTextInput } from '../src/components/AppTextInput';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { useAuth } from '../src/hooks/useAuth';
 
 export default function ProfileScreen() {
+  const { logout } = useAuth();
   const router = useRouter();
-
-  const [profileInfo, setProfileInfo] = useState(null);
+  const [profileInfo, setProfileInfo] = useState({ name: 'John Doe' });
   const [role, setRole] = useState('user');
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const storedUser = await AsyncStorage.getItem('user');
-        if (storedUser) {
-          setProfileInfo(JSON.parse(storedUser));
-        }
+  const checkRole = async () => {
+    const role = await AsyncStorage.getItem('userRole');
 
-        const storedRole = await AsyncStorage.getItem('userRole');
-        if (storedRole) {
-          setRole(storedRole);
-        }
-
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('user');
-    await AsyncStorage.removeItem('token');
-
-    router.replace('/');
+    if (role === 'admin') {
+      router.replace('/admin-profile');
+    }
   };
 
-  if (!profileInfo) {
-    return <Text style={{ color: colors.text }}>Cargando perfil...</Text>;
-  }
+  checkRole();
+}, []);
+
+  useEffect(() => {
+  const loadData = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        setProfileInfo(JSON.parse(storedUser));
+      }
+
+      const storedRole = await AsyncStorage.getItem('userRole');
+      if (storedRole) {
+        setRole(storedRole);
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  loadData();
+}, []);
+
+  const handleLogout = () => {
+  logout(router);
+};
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-
-      <Text style={{ color: '#fff', textAlign: 'center', fontSize: 18 }}>
-        PROFILE
-      </Text>
-
-      <View style={{ alignItems: 'center', marginTop: 20 }}>
-        <Text style={{ color: '#fff', fontSize: 22 }}>
-          {profileInfo.name}
-        </Text>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>PROFILE</Text>
       </View>
 
-      <View style={{ padding: 20 }}>
-        <AppTextInput 
-          value={profileInfo.name}
-          onChangeText={(text) => setProfileInfo({...profileInfo, name: text})}
-        />
+      <View style={styles.content}>
+        {profileInfo ? (
+          <>
+            {/* Avatar */}
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarInitial}>{profileInfo.name?.charAt(0) || '?'}</Text>
+            </View>
+
+            {/* Nombre Display */}
+            <Text style={styles.nameText}>{profileInfo.name}</Text>
+
+            {/* Input Editable */}
+            <View style={styles.inputSection}>
+              <AppTextInput 
+                value={profileInfo.name}
+                onChangeText={(text) => setProfileInfo({...profileInfo, name: text})}
+                placeholder="Full Name"
+                autoCapitalize="words"
+              />
+            </View>
+          </>
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={{color: '#94a3b8'}}>Cargando perfil...</Text>
+          </View>
+        )}
+
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>LOG OUT</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={handleLogout}>
-        <Text style={{ color: 'red', textAlign: 'center' }}>
-          LOG OUT
-        </Text>
-      </TouchableOpacity>
-
-      <BottomNav activeRoute="profile" role={role} />
+      <BottomNav activeRoute="profile" />
     </View>
   );
 }

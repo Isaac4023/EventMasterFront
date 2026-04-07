@@ -1,63 +1,86 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
-import { StyleSheet } from 'react-native';
-import { colors } from '../src/theme/colors';
 import { useRouter } from 'expo-router';
+import { colors } from '../src/theme/colors';
 import { BottomNav } from '../src/components/BottomNav';
 import { AppTextInput } from '../src/components/AppTextInput';
-import api from '../src/services/api';
+import { usePlaces } from '../src/hooks/usePlaces';
+import { StyleSheet } from 'react-native';
+
+const VenueCard = ({ id, name, location, capacity }) => {
+  const router = useRouter();
+
+  return (
+    <TouchableOpacity 
+      style={styles.venueCard} 
+      onPress={() => router.push(`/admin-availability?id=${id}`)}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.venueName}>{name}</Text>
+      <Text style={styles.venueLocation}>{location}</Text>
+
+      <View style={styles.venueFooter}>
+        <Text style={styles.venueCapacity}>CAP: {capacity}</Text>
+
+        <TouchableOpacity onPress={() => router.push('/admin-place-details')}>
+          <Text style={styles.editVenueText}>EDIT VENUE</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 export default function AdminManagePlacesScreen() {
   const router = useRouter();
-  const [venues, setVenues] = useState([]);
-
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      try {
-        const res = await api.get('/places');
-        setVenues(res.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchPlaces();
-  }, []);
+  const { places, loading } = usePlaces();
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <ScrollView>
-        <Text>MANAGE PLACES</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>MANAGE PLACES</Text>
+        </View>
 
-        <AppTextInput placeholder="Buscar..." />
+        {/* Search */}
+        <AppTextInput placeholder="Filter for events" />
 
-        <TouchableOpacity onPress={() => router.push('/admin-new-venue')}>
-          <Text>+ ADD NEW VENUE</Text>
+        {/* Add New Venue */}
+        <TouchableOpacity 
+          style={styles.primaryButton} 
+          onPress={() => router.push('/admin-new-venue')}
+        >
+          <Text style={styles.primaryButtonText}>+ ADD NEW VENUE</Text>
         </TouchableOpacity>
 
-        {venues.length > 0 ? (
-          venues.map((venue) => (
-            <TouchableOpacity
-              key={venue._id}
-              onPress={() => router.push(`/admin-availability?id=${venue._id}`)}
-            >
-              <Text>{venue.name}</Text>
-              <Text>{venue.address?.city}</Text>
-              <Text>Cap: {venue.maxCapacity}</Text>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text>No hay sedes</Text>
-        )}
+        {/* Venues List */}
+        <View style={styles.venuesContainer}>
+          {places.length > 0 ? (
+            places.map((venue) => (
+              <VenueCard
+                key={venue._id}
+                 id={venue._id}
+                 name={venue.name}
+                 location={venue.address?.city || 'Sin ubicación'}
+                 capacity={venue.maxCapacity}
+              />
+              ))
+          ) : (
+            <Text style={{ color: '#94a3b8', textAlign: 'center', marginTop: 20 }}>
+              {loading ? 'Cargando sedes...' : 'No hay sedes registradas todavía.'}
+            </Text>
+          )}
+        </View>
+
       </ScrollView>
 
       <BottomNav activeRoute="tickets" role="admin" />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

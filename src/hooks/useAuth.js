@@ -19,7 +19,7 @@ export const useAuth = () => {
       await SecureStore.setItemAsync('authToken', token);
 
       // Guardar datos del usuario
-      await AsyncStorage.setItem('userRole', role);
+      await AsyncStorage.setItem('userRole', res.data.role);
 
       const userData = {
         _id,
@@ -70,7 +70,7 @@ export const useAuth = () => {
       'userRole',
       'cache_profile',
       'cache_events',
-      'user', // 🔥 importante
+      'user', 
     ]);
 
     router.replace('/');

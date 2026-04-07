@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { colors } from '../theme/colors';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const BottomNav = ({ activeRoute = 'home', role = 'user' }) => {
+export const BottomNav = ({ activeRoute = 'home' }) => {
   const router = useRouter();
+  const [role, setRole] = useState('user');
 
-  // Propiedades de navegación base del diseño Figma
+  useEffect(() => {
+    const loadRole = async () => {
+      const storedRole = await AsyncStorage.getItem('userRole');
+      if (storedRole) setRole(storedRole);
+    };
+    loadRole();
+  }, []);
+
   const userNavItems = [
     { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/home' },
     { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/tickets' },
@@ -15,17 +24,22 @@ export const BottomNav = ({ activeRoute = 'home', role = 'user' }) => {
 
   const adminNavItems = [
     { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/admin-home' },
-    { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/admin-dashboard' },
-    { id: 'profile', title: 'Perfil', icon: require('../../assets/images/user.png'), route: '/profile' },
+    { id: 'tickets', title: 'Dashboard', icon: require('../../assets/images/boletos.png'), route: '/admin-dashboard' },
+    { id: 'profile', title: 'Perfil', icon: require('../../assets/images/user.png'), route: '/admin-profile' },
   ];
 
   const staffNavItems = [
     { id: 'home', title: 'Home', icon: require('../../assets/images/home.png'), route: '/staff-home' },
-    { id: 'tickets', title: 'Tickets', icon: require('../../assets/images/boletos.png'), route: '/staff-scanner' },
+    { id: 'tickets', title: 'Scanner', icon: require('../../assets/images/boletos.png'), route: '/staff-scanner' },
     { id: 'profile', title: 'Perfil', icon: require('../../assets/images/user.png'), route: '/profile' },
   ];
 
-  const navItems = role === 'admin' ? adminNavItems : role === 'staff' ? staffNavItems : userNavItems;
+  const navItems =
+    role === 'admin'
+      ? adminNavItems
+      : role === 'staff'
+      ? staffNavItems
+      : userNavItems;
 
   return (
     <View style={styles.container}>
@@ -35,9 +49,8 @@ export const BottomNav = ({ activeRoute = 'home', role = 'user' }) => {
           <TouchableOpacity 
             key={item.id} 
             style={[styles.navItem, !isActive && styles.inactiveItem]}
-            onPress={() => router.push(item.route)}
+            onPress={() => router.replace(item.route)}
           >
-            {/* Contenedor del ícono, en caso de que sean blancos, se usa tintColor para cambiarlos */}
             <Image 
               source={item.icon} 
               style={[
@@ -61,10 +74,11 @@ export const BottomNav = ({ activeRoute = 'home', role = 'user' }) => {
   );
 };
 
+// 🔥 ESTO FALTABA (EL ERROR)
 const styles = StyleSheet.create({
   container: {
     height: 66,
-    backgroundColor: 'rgba(26,35,46,0.9)', // Figma tenía 0.8, pero 0.9 suele leerse mejor sin librerías complejas de Blur si está sobre negro
+    backgroundColor: 'rgba(26,35,46,0.9)',
     borderTopColor: 'rgba(255,255,255,0.05)',
     borderTopWidth: 1,
     flexDirection: 'row',

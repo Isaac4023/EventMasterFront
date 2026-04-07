@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { BottomNav } from '../src/components/BottomNav';
 import api from '../src/services/api';
-import * as SecureStore from 'expo-secure-store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StyleSheet } from 'react-native';
+import { useAuth } from '../src/hooks/useAuth';
 
 export default function AdminProfileScreen() {
+  const { logout } = useAuth();
   const router = useRouter();
   const [adminInfo, setAdminInfo] = useState(null);
 
@@ -25,31 +24,41 @@ export default function AdminProfileScreen() {
     fetchProfile();
   }, []);
 
-  const handleLogout = async () => {
-    await SecureStore.deleteItemAsync('authToken');
-    await AsyncStorage.multiRemove(['userRole', 'cache_profile']);
-    router.replace('/');
+  const handleLogout = () => {
+    logout(router);
   };
 
   const getInitial = (name) => name ? name.charAt(0).toUpperCase() : '?';
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      <ScrollView contentContainerStyle={styles.content}>
+
         {adminInfo ? (
-          <View>
-            <Text>{getInitial(adminInfo.name)}</Text>
-            <Text>{adminInfo.name}</Text>
-            <Text>{adminInfo.email}</Text>
-            <Text>{adminInfo.role}</Text>
-          </View>
+          <>
+            {/* Avatar */}
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarText}>
+                {getInitial(adminInfo.name)}
+              </Text>
+            </View>
+
+            {/* Info */}
+            <Text style={styles.name}>{adminInfo.name}</Text>
+            <Text style={styles.info}>{adminInfo.email}</Text>
+            <Text style={styles.info}>{adminInfo.role}</Text>
+          </>
         ) : (
-          <Text>Cargando perfil...</Text>
+          <Text style={styles.loading}>Cargando perfil...</Text>
         )}
 
-        <TouchableOpacity onPress={handleLogout}>
-          <Text>CERRAR SESIÓN</Text>
+        {/* Logout */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>CERRAR SESIÓN</Text>
         </TouchableOpacity>
+
       </ScrollView>
 
       <BottomNav activeRoute="profile" role="admin" />

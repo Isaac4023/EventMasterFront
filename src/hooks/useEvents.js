@@ -13,7 +13,6 @@ export const useEvents = () => {
     try {
       const data = await fetchWithCache('/event', 'cache_events');
 
-      // 🔥 asegurar que siempre sea array
       if (Array.isArray(data)) {
         setEvents(data);
       } else {

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, StatusBar
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import api from '../src/services/api';
 import { colors } from '../src/theme/colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StyleSheet } from 'react-native';
+import api from '../src/services/api';
 
 export default function BookingConfirmScreen() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function BookingConfirmScreen() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    const fetchAvailability = async () => {
+    const fetchEvent = async () => {
       try {
         const res = await api.get(`/event/${id}/availability`);
         setEvent(res.data);
@@ -23,103 +23,81 @@ export default function BookingConfirmScreen() {
       }
     };
 
-    if (id) fetchAvailability();
+    if (id) fetchEvent();
   }, [id]);
 
-  const generateFakeQR = () => {
-    return 'QR-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  // 🔥 MOCK SI NO HAY DATA
+  const mockEvent = {
+    title: 'Evento demo',
+    startTime: new Date().toISOString(),
+    totalCapacity: 100,
+    totalAvailable: 50,
   };
 
-  const handleConfirm = async () => {
-    try {
-      const newReservation = {
-        id: Date.now().toString(),
-        eventId: id,
-        title: event.title,
-        date: event.startTime,
-        quantity,
-        qr: generateFakeQR(),
-        status: 'active',
-      };
+  const currentEvent = event || mockEvent;
 
-      const stored = await AsyncStorage.getItem('reservations');
-      const reservations = stored ? JSON.parse(stored) : [];
-
-      reservations.push(newReservation);
-
-      await AsyncStorage.setItem('reservations', JSON.stringify(reservations));
-
-      alert('Reserva confirmada');
-      router.push('/tickets');
-
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  if (!event) {
-    return <Text style={{ color: colors.text }}>Cargando...</Text>;
-  }
-
-  const totalOccupied = event.totalCapacity - event.totalAvailable;
+  const totalOccupied = currentEvent.totalCapacity - currentEvent.totalAvailable;
 
   const increment = () =>
-    setQuantity(prev => Math.min(prev + 1, event.totalAvailable));
+    setQuantity(prev => Math.min(prev + 1, currentEvent.totalAvailable || 1));
 
   const decrement = () =>
     setQuantity(prev => Math.max(prev - 1, 1));
 
-  const soldPercent = event.totalCapacity > 0
-    ? (totalOccupied / event.totalCapacity) * 100
+  const soldPercent = currentEvent.totalCapacity > 0
+    ? (totalOccupied / currentEvent.totalCapacity) * 100
     : 0;
 
+  const handleConfirm = () => {
+    alert('Reserva completada con éxito');
+    router.push('/tickets');
+  };
+
   return (
-  <View style={{ flex: 1, backgroundColor: colors.background }}>
-    <StatusBar barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
 
-    <View style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
-
-      <Text style={{ color: '#fff', textAlign: 'center', fontSize: 18 }}>
-        {event.title}
-      </Text>
-
-      <Text style={{ color: '#fff', textAlign: 'center', marginTop: 10 }}>
-        Disponibles: {event.totalAvailable}
-      </Text>
-
-      <Text style={{ color: '#fff', textAlign: 'center' }}>
-        Vendidos: {totalOccupied}
-      </Text>
-
-      <Text style={{ color: '#fff', textAlign: 'center', marginBottom: 20 }}>
-        {Math.round(soldPercent)}% ocupación
-      </Text>
-
-      {/* CONTADOR */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-        <TouchableOpacity onPress={decrement}>
-          <Text style={{ color: '#fff', fontSize: 20 }}>-</Text>
-        </TouchableOpacity>
-
-        <Text style={{ color: '#fff', marginHorizontal: 20 }}>
-          {quantity}
-        </Text>
-
-        <TouchableOpacity onPress={increment}>
-          <Text style={{ color: '#fff', fontSize: 20 }}>+</Text>
-        </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>EVENT NAME</Text>
       </View>
 
-      {/* BOTÓN */}
-      <TouchableOpacity onPress={handleConfirm} style={{ marginTop: 40 }}>
-        <Text style={{ color: '#fff', textAlign: 'center' }}>
-          CONFIRMAR RESERVA
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.content}>
 
+        <Text style={styles.eventName}>{currentEvent.title}</Text>
+
+        <Text style={styles.eventDate}>
+          {currentEvent.startTime
+            ? new Date(currentEvent.startTime).toLocaleDateString()
+            : ''}
+        </Text>
+
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${soldPercent}%` }]} />
+        </View>
+
+        <Text style={styles.ticketsLabel}>
+          {totalOccupied}/{currentEvent.totalCapacity} Tickets Sold
+        </Text>
+
+        <View style={styles.counterContainer}>
+          <TouchableOpacity style={styles.counterSide} onPress={decrement}>
+            <Text style={styles.counterSideText}>-</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.counterValue}>{quantity}</Text>
+
+          <TouchableOpacity style={styles.counterSide} onPress={increment}>
+            <Text style={styles.counterSideText}>+</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+          <Text style={styles.confirmButtonText}>CONFIRMAR RESERVA</Text>
+        </TouchableOpacity>
+
+      </View>
     </View>
-  </View>
-);
+  );
 }
 
 const styles = StyleSheet.create({

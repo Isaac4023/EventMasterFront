@@ -7,7 +7,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// 🔐 Interceptor request
+// Interceptor request
 api.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('authToken');
 
@@ -18,7 +18,7 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// 🔐 Interceptor response
+// Interceptor response
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

@@ -1,68 +1,72 @@
 import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import { FlatList, Text, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import { FlatList, Text, TextInput, View, StatusBar, Image } from 'react-native';
 import { BottomNav } from '../src/components/BottomNav';
 import { EventCard } from '../src/components/EventCard';
+import { useEvents } from '../src/hooks/useEvents';
 import { colors } from '../src/theme/colors';
-import api from '../src/services/api';
+import { StyleSheet } from 'react-native';
 
 export default function StaffHomeScreen() {
   const router = useRouter();
-
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchEvents = async () => {
-    try {
-      const res = await api.get('/event');
-      setEvents(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  const { events, loading } = useEvents();
 
   const filteredEvents = events.filter(event =>
     (event.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      <TextInput
-        placeholder="Buscar eventos..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>STAFF EVENTS</Text>
+      </View>
+
+      {/* SEARCH */}
+      <View style={styles.searchContainer}>
+        <Image
+          source={require('../assets/images/lupa.png')}
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar eventos..."
+          placeholderTextColor={colors.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      {/* LISTA */}
+      <FlatList
+        data={filteredEvents}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            {loading ? 'Cargando...' : 'No hay eventos disponibles'}
+          </Text>
+        }
+        renderItem={({ item }) => (
+          <EventCard
+            title={item.title}
+            subtitle={item.location}
+            salesPercentage={0}
+            primaryColor={'#fa6203'}
+            onPress={() => router.push(`/staff-scanner?id=${item._id}`)}
+          />
+        )}
       />
 
-      {loading ? (
-        <Text>Cargando...</Text>
-      ) : (
-        <FlatList
-          data={filteredEvents}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <EventCard
-              title={item.title}
-              subtitle={item.location}
-              salesPercentage={0}
-              primaryColor={'#fa6203'}
-              onPress={() => router.push(`/staff-scanner?id=${item._id}`)}
-            />
-          )}
-        />
-      )}
-
-      <BottomNav activeRoute="home" role="staff" />
+      <BottomNav activeRoute="home" />
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

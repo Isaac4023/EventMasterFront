@@ -14,13 +14,22 @@ export default function EventDetailsScreen() {
 
   const { events, loading } = useEvents();
 
-  const event = events.find(e => e._id === id);
+  // fallback para evitar errores
+  const mockEvent = {
+    title: '',
+    description: '',
+    location: '',
+    startTime: '',
+    imageUrl: null,
+  };
+
+  const event = events.find(e => e._id === id) || mockEvent;
 
   const handleReserve = () => {
     router.push(`/booking-confirm?id=${id}`);
   };
 
-  if (loading || !event) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={{ color: colors.text }}>Cargando evento...</Text>
@@ -39,28 +48,27 @@ export default function EventDetailsScreen() {
       </View>
 
       <ScrollView>
-     {/*}
+
+        {/* Imagen */}
         <View>
           {event.imageUrl ? (
             <Image source={{ uri: event.imageUrl }} style={styles.image} />
           ) : (
-            <View style={styles.imagePlaceholder} />
+            <Image
+              source={require('../assets/images/miimagen.jpg')}
+              style={styles.image}
+            />
           )}
-        </View>*/}
-
-        <Image
-           source={{
-             uri: event.imageUrl || 'https://picsum.photos/800/400'
-         }}
-           style={{ width: '100%', height: 200 }}
-        />
+        </View>
 
         {/* Info */}
         <View style={styles.content}>
           <Text style={styles.title}>{event.title}</Text>
 
           <Text style={styles.subtitle}>
-            {new Date(event.startTime).toLocaleDateString()} • {event.location}
+            {event.startTime
+              ? new Date(event.startTime).toLocaleDateString()
+              : ''} • {event.location}
           </Text>
 
           <Text style={styles.description}>
@@ -72,6 +80,7 @@ export default function EventDetailsScreen() {
             onPress={handleReserve}
           />
         </View>
+
       </ScrollView>
     </View>
   );

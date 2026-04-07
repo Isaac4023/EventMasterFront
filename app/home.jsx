@@ -14,22 +14,30 @@ import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 
-// 🔥 NUEVO
 import { useEvents } from '../src/hooks/useEvents';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [role, setRole] = useState('user');
 
-  // 🔥 Hook de eventos
   const { events, loading } = useEvents();
 
   useEffect(() => {
-    AsyncStorage.getItem('userRole').then((r) => {
-      if (r) setRole(r);
-    });
-  }, []);
+  const loadRole = async () => {
+    const storedRole = await AsyncStorage.getItem('userRole');
+
+    if (storedRole === 'admin') {
+      router.replace('/admin-home');
+    }
+
+    if (storedRole === 'staff') {
+      router.replace('/staff-home');
+    }
+  };
+
+  loadRole();
+}, []);
+
 
   const handleEventPress = (id) => {
     router.push(`/event-details?id=${id}`);
@@ -98,7 +106,7 @@ export default function HomeScreen() {
       />
 
       {/* BottomNav */}
-      <BottomNav activeRoute="home" role={role} />
+      <BottomNav activeRoute="home" />
     </View>
   );
 }
