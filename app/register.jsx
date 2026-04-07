@@ -1,70 +1,99 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from 'react-native';
+
 import { AppTextInput } from '../src/components/AppTextInput';
 import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
 import { useRouter } from 'expo-router';
 
+// 🔥 NUEVO
+import { useAuth } from '../src/hooks/useAuth';
+import { validators } from '../src/utils/validators';
+
 export default function RegisterScreen() {
   const router = useRouter();
+  const { register } = useAuth();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleRegister = () => {
-    // TODO (Chuy): POST /auth/register con { name, email, password }
-    // ⚠️ La API ya NO devuelve token en el registro.
-    // Response 201: { _id, name, email, role, accountType }
-    // Tras éxito → mostrar Alert de confirmación y router.replace('/') para ir a login.
-    console.log('Register attempt', name, email, password);
+    if (!validators.name(name)) {
+      return Alert.alert('Error', 'Nombre inválido (solo letras)');
+    }
+
+    if (!validators.email(email)) {
+      return Alert.alert('Error', 'Email inválido');
+    }
+
+    if (!validators.password(password)) {
+      return Alert.alert(
+        'Error',
+        'La contraseña debe tener al menos 6 caracteres y contener letras y números'
+      );
+    }
+
+    register(name, email, password, router);
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-           <Image 
-             source={require('../assets/images/logo_EventMaster.png')} 
-             style={styles.logo} 
-             resizeMode="contain"
-           />
+          <Image
+            source={require('../assets/images/logo_EventMaster.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>Crea tu cuenta</Text>
-        
-        <AppTextInput 
-          placeholder="Nombre completo" 
+
+        <AppTextInput
+          placeholder="Nombre completo"
           value={name}
           onChangeText={setName}
           autoCapitalize="words"
         />
 
-        <AppTextInput 
-          placeholder="Email" 
+        <AppTextInput
+          placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        
-        <AppTextInput 
-          placeholder="Password" 
+
+        <AppTextInput
+          placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
-        
-        <AppButton 
-          title="Registrarse" 
-          onPress={handleRegister} 
+
+        <AppButton
+          title="Registrarse"
+          onPress={handleRegister}
           style={styles.registerButton}
         />
-        
+
         <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
+          <Text style={styles.loginText}>
+            ¿Ya tienes cuenta?{' '}
+          </Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.loginLink}>Ingresa aquí</Text>
           </TouchableOpacity>

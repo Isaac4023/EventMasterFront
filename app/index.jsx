@@ -1,83 +1,88 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from 'react-native';
+
 import { AppTextInput } from '../src/components/AppTextInput';
 import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
 import { useRouter } from 'expo-router';
 
+// 🔥 NUEVO
+import { useAuth } from '../src/hooks/useAuth';
+import { validators } from '../src/utils/validators';
+
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    // TODO: REMOVE BEFORE MERGE - Credenciales de prueba exclusivas para navegar en UI
-    if (email.trim() === 'test@test.com' && password === '123') {
-      await AsyncStorage.setItem('userRole', 'user');
-      router.replace('/home');
-      return;
+  const handleLogin = () => {
+    // ❌ quitar prototipo
+    if (!validators.email(email)) {
+      return Alert.alert('Error', 'Email inválido');
     }
-    if (email.trim() === 'admin@test.com' && password === '123') {
-      await AsyncStorage.setItem('userRole', 'admin');
-      router.replace('/admin-home');
-      return;
-    }
-    if (email.trim() === 'staff@test.com' && password === '123') {
-      await AsyncStorage.setItem('userRole', 'staff');
-      router.replace('/staff-home');
-      return;
-    }
-    Alert.alert('Error', 'Prototipo: test@test.com (user), admin@test.com (admin) o staff@test.com (staff) / Pass: 123');
 
-    // TODO (Chuy): POST /auth/login con { email, password }
-    // Response 200: { _id, name, email, role, accountType, options, token }
-    // ✅ La API ahora SÍ devuelve el "role" en el login.
-    // 1. Guardar token en SecureStore
-    // 2. Guardar role en AsyncStorage
-    // 3. router.replace según role → /home | /admin-home | /staff-home
-    console.log('Login attempt', email, password);
+    if (!validators.password(password)) {
+      return Alert.alert(
+        'Error',
+        'La contraseña debe tener al menos 6 caracteres y contener letras y números'
+      );
+    }
+
+    login(email, password, router);
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-           <Image 
-             source={require('../assets/images/logo_EventMaster.png')} 
-             style={styles.logo} 
-             resizeMode="contain"
-           />
+          <Image
+            source={require('../assets/images/logo_EventMaster.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>Bienvenido</Text>
-        
-        <AppTextInput 
-          placeholder="Email" 
+
+        <AppTextInput
+          placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        
-        <AppTextInput 
-          placeholder="Password" 
+
+        <AppTextInput
+          placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
-        
-        <AppButton 
-          title="Ingresar" 
-          onPress={handleLogin} 
+
+        <AppButton
+          title="Ingresar"
+          onPress={handleLogin}
           style={styles.loginButton}
         />
-        
+
         <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+          <Text style={styles.registerText}>
+            ¿No tienes cuenta?{' '}
+          </Text>
           <TouchableOpacity onPress={() => router.push('/register')}>
             <Text style={styles.registerLink}>Regístrate</Text>
           </TouchableOpacity>
