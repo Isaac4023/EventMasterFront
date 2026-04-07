@@ -7,7 +7,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
 
-  // 🔐 LOGIN
   const login = async (email, password, router) => {
     setLoading(true);
 
@@ -16,15 +15,23 @@ export const useAuth = () => {
 
       const { token, role, _id, name, email: userEmail } = res.data;
 
-      // 🔐 Guardar JWT
+      // Guardar token
       await SecureStore.setItemAsync('authToken', token);
 
-      // 💾 Guardar datos
+      // Guardar datos del usuario
       await AsyncStorage.setItem('userRole', role);
-      await AsyncStorage.setItem(
-        'cache_profile',
-        JSON.stringify({ _id, name, email: userEmail, role })
-      );
+
+      const userData = {
+        _id,
+        name: name || email, // fallback
+        email: userEmail,
+        role,
+      };
+
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+
+      // (opcional, lo puedes dejar)
+      await AsyncStorage.setItem('cache_profile', JSON.stringify(userData));
 
       // 🚀 Redirección
       if (role === 'admin') router.replace('/admin-home');
@@ -38,7 +45,7 @@ export const useAuth = () => {
     }
   };
 
-  // 🧾 REGISTER
+  // REGISTER
   const register = async (name, email, password, router) => {
     setLoading(true);
 
@@ -56,13 +63,14 @@ export const useAuth = () => {
     }
   };
 
-  // 🚪 LOGOUT
+  // LOGOUT
   const logout = async (router) => {
     await SecureStore.deleteItemAsync('authToken');
     await AsyncStorage.multiRemove([
       'userRole',
       'cache_profile',
       'cache_events',
+      'user', // 🔥 importante
     ]);
 
     router.replace('/');

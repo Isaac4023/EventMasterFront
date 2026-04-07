@@ -27,7 +27,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    // ❌ quitar prototipo
     if (!validators.email(email)) {
       return Alert.alert('Error', 'Email inválido');
     }

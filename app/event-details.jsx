@@ -1,70 +1,82 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View, Text, Image, ScrollView, TouchableOpacity
+} from 'react-native';
 import { colors } from '../src/theme/colors';
 import { AppButton } from '../src/components/AppButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useEvents } from '../src/hooks/useEvents';
+import { StyleSheet } from 'react-native';
 
 export default function EventDetailsScreen() {
   const router = useRouter();
-  // Aquí se podrían extraer parámetros reales en un futuro:
-  // const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
 
-  // TODO (Chuy): Llamar GET /event/${id} y poblar con la respuesta
-  // Response: { _id, title, description, location, startTime, endTime,
-  //   status, totalCapacity, zones: [{ name, capacity, occupied, price }],
-  //   createdBy: { _id, name } }
-  const mockEvent = {
-    title: '',
-    description: '',
-    location: '',
-    startTime: '',
-    endTime: '',
-    status: '',
-    totalCapacity: 0,
-    zones: [],           // ← cada zona tiene { name, capacity, occupied, price }
-    imageUrl: null,
-  };
+  const { events, loading } = useEvents();
+
+  const event = events.find(e => e._id === id);
 
   const handleReserve = () => {
-    router.push('/booking-confirm');
+    router.push(`/booking-confirm?id=${id}`);
   };
+
+  if (loading || !event) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: colors.text }}>Cargando evento...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backText}>{'<'}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Event Details</Text>
-        <View style={styles.placeholderSpace} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Imagen principal */}
-        <View style={styles.imageContainer}>
-          {mockEvent.imageUrl ? (
-            <Image source={{ uri: mockEvent.imageUrl }} style={styles.image} resizeMode="cover" />
+      <ScrollView>
+     {/*}
+        <View>
+          {event.imageUrl ? (
+            <Image source={{ uri: event.imageUrl }} style={styles.image} />
           ) : (
             <View style={styles.imagePlaceholder} />
           )}
-        </View>
+        </View>*/}
 
-        {/* Información del evento */}
-        <Text style={styles.title}>{mockEvent.title}</Text>
-        <Text style={styles.date}>{mockEvent.startTime ? new Date(mockEvent.startTime).toLocaleDateString() : ''} • {mockEvent.location}</Text>
-        <Text style={styles.description}>{mockEvent.description}</Text>
-
-        {/* Botón de Reserva personalizado con color naranja (Figma: #fa6203) */}
-        <AppButton 
-          title="RESERVAR AHORA" 
-          onPress={handleReserve} 
-          style={styles.reserveButton}
+        <Image
+           source={{
+             uri: event.imageUrl || 'https://picsum.photos/800/400'
+         }}
+           style={{ width: '100%', height: 200 }}
         />
+
+        {/* Info */}
+        <View style={styles.content}>
+          <Text style={styles.title}>{event.title}</Text>
+
+          <Text style={styles.subtitle}>
+            {new Date(event.startTime).toLocaleDateString()} • {event.location}
+          </Text>
+
+          <Text style={styles.description}>
+            {event.description}
+          </Text>
+
+          <AppButton
+            title="RESERVAR AHORA"
+            onPress={handleReserve}
+          />
+        </View>
       </ScrollView>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

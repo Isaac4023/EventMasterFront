@@ -41,22 +41,33 @@ export default function StaffScannerScreen() {
 
   // Also triggered by pressing Verify Ticket
   const processScan = async () => {
-    setLoading(true);
-    try {
-      // TODO (Chuy): Replace with real API call
-      // const response = await fetch('YOUR_API_URL/verify', { method: 'POST', body: JSON.stringify({ ticketData: '...' }) });
-      // const data = await response.json();
+  setLoading(true);
 
-      // Mock API call: wait 2 seconds, then show Authorized
-      setTimeout(() => {
-        setLoading(false);
-        setShowResultModal(true);
-      }, 2000);
-    } catch (error) {
-      console.error('Error verifying ticket:', error);
+  try {
+    const stored = await AsyncStorage.getItem('reservations');
+    const reservations = stored ? JSON.parse(stored) : [];
+
+    // Simular lectura (usa manualId o random)
+    const scannedQR = manualId || reservations[0]?.qr;
+
+    const found = reservations.find(r => r.qr === scannedQR);
+
+    setTimeout(() => {
       setLoading(false);
-    }
-  };
+
+      if (found) {
+        setShowResultModal(true);
+      } else {
+        alert('Ticket inválido');
+        setScanned(false);
+      }
+    }, 1000);
+
+  } catch (error) {
+    console.error(error);
+    setLoading(false);
+  }
+};
 
   const resetScanner = () => {
     setShowResultModal(false);

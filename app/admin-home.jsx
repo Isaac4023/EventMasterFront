@@ -1,79 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors } from '../src/theme/colors';
 import { BottomNav } from '../src/components/BottomNav';
+import { useEvents } from '../src/hooks/useEvents';
 
 export default function AdminHomeScreen() {
   const router = useRouter();
-  // TODO (Chuy): Poblar con GET /event (filtrar status !== 'cancelled')
-  // Cada evento: { _id, title, status, totalCapacity, zones }
-  // Para stats: calcular aforo sumando zones.occupied / totalCapacity de todos los eventos
-  const [stats, setStats] = useState({
-    ventas: '',
-    aforo: ''
-  });
-  
+  const { events } = useEvents();
+
+  const [stats, setStats] = useState({ ventas: '', aforo: '' });
   const [activeEvents, setActiveEvents] = useState([]);
 
+  useEffect(() => {
+    const active = events.filter(e => e.status !== 'cancelled');
+    setActiveEvents(active);
+
+    const totalCapacity = active.reduce((sum, e) => sum + (e.totalCapacity || 0), 0);
+
+    const occupied = active.reduce((sum, e) =>
+      sum + (e.zones || []).reduce((s, z) => s + (z.occupied || 0), 0)
+    , 0);
+
+    setStats({
+      ventas: occupied,
+      aforo: totalCapacity ? `${Math.round((occupied / totalCapacity) * 100)}%` : '0%',
+    });
+  }, [events]);
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.adminName}>Admin Panel</Text>
-        </View>
+    <View style={{ flex: 1 }}>
+      <ScrollView>
+        <Text>Admin Panel</Text>
 
-        {/* Overview Container */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>VENTAS</Text>
-              <Text style={styles.statValueRed}>{stats.ventas}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>AFORO</Text>
-              <Text style={styles.statValueRed}>{stats.aforo}</Text>
-            </View>
+        <Text>Ventas: {stats.ventas}</Text>
+        <Text>Aforo: {stats.aforo}</Text>
+
+        {activeEvents.map(event => (
+          <View key={event._id}>
+            <Text>{event.title}</Text>
+            <TouchableOpacity onPress={() => router.push(`/admin-place-details?id=${event._id}`)}>
+              <Text>EDIT</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-
-        {/* Quick Actions Container */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
-          
-          <TouchableOpacity 
-            style={styles.outlineActionCard}
-            onPress={() => router.push('/admin-new-venue')}
-          >
-            <Text style={styles.outlineActionText}>+ Registrar Lugar</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.solidActionCard}
-            onPress={() => router.push('/admin-new-event')}
-          >
-            <Text style={styles.solidActionText}>+ Nuevo evento</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Active Events Container */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Eventos Activos</Text>
-          
-          {activeEvents.map((event) => (
-            <View key={event._id} style={styles.activeEventCard}>
-              <Text style={styles.activeEventName}>{event.title}</Text>
-              <TouchableOpacity onPress={() => router.push('/admin-place-details')}>
-                <Text style={styles.editButtonText}>EDIT</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-
+        ))}
       </ScrollView>
 
       <BottomNav activeRoute="home" role="admin" />

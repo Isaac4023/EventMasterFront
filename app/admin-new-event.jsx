@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import api from '../src/services/api';
+import { validators } from '../src/utils/validators';
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, StatusBar, Image, Platform
@@ -48,7 +50,7 @@ export default function AdminNewEventScreen() {
   // ── Image picker ──────────────────────────────────────────────────────────
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [16, 9],
       quality: 1,
@@ -73,18 +75,65 @@ export default function AdminNewEventScreen() {
     }
   };
 
-  // ── Build payload (para referencia del equipo de integración) ─────────────
-  // TODO (Chuy): Usar este payload en POST /event/new con el JWT en header x-auth-token
-  // La API usa totalCapacity (NO capacity). description y status son opcionales.
-  // const payload = {
-  //   title,
-  //   description,
-  //   startTime: toISO(startDate, startTimeText),   // ISO 8601
-  //   endTime:   toISO(endDate,   endTimeText),      // ISO 8601  ← OBLIGATORIO
-  //   location,
-  //   totalCapacity: Number(capacity),               // ← API usa totalCapacity
-  //   status: 'published',                           // published | suspended
-  // };
+  const handleCreate = async () => {
+
+
+  if (!validators.required(title)) {
+    return alert('El título es requerido');
+  }
+
+  if (!validators.required(location)) {
+    return alert('La ubicación es requerida');
+  }
+
+  if (!validators.capacity(capacity)) {
+    return alert('Capacidad inválida');
+  }
+
+  if (!validators.required(description)) {
+    return alert('La descripción es requerida');
+  }
+
+  if (!validators.required(startDateText)) {
+    return alert('Fecha de inicio requerida');
+  }
+
+  if (!validators.required(endDateText)) {
+    return alert('Fecha de fin requerida');
+  }
+
+  // formato HH:MM
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+  if (!timeRegex.test(startTimeText)) {
+    return alert('Hora de inicio inválida (HH:MM)');
+  }
+
+  if (!timeRegex.test(endTimeText)) {
+    return alert('Hora de fin inválida (HH:MM)');
+  }
+
+  try {
+    const payload = {
+      title,
+      description,
+      startTime: toISO(startDate, startTimeText),
+      endTime: toISO(endDate, endTimeText),
+      location,
+      totalCapacity: Number(capacity),
+      status: 'published',
+    };
+
+    await api.post('/event/new', payload);
+
+    alert('Evento creado');
+    router.back();
+
+  } catch (error) {
+    console.error(error.response?.data);
+    alert('Error al crear evento');
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -221,7 +270,7 @@ export default function AdminNewEventScreen() {
         </View>
 
         {/* Submit */}
-        <TouchableOpacity style={styles.primaryButton}>
+        <TouchableOpacity style={styles.primaryButton} onPress={handleCreate}>
           <Text style={styles.primaryButtonText}>+ PUBLICAR EVENTO</Text>
         </TouchableOpacity>
       </ScrollView>

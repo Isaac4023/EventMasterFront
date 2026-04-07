@@ -1,23 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, Image, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  Image,
+  StatusBar,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../src/theme/colors';
 import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 
-// TODO (Chuy): Poblar con datos reales del endpoint GET /event
-// Cada evento de la API trae: { _id, title, description, location, startTime, endTime,
-//   status, totalCapacity, zones: [{ name, capacity, occupied, price }], createdBy: { _id, name } }
-const MOCK_EVENTS = [];
+// 🔥 NUEVO
+import { useEvents } from '../src/hooks/useEvents';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [role, setRole] = useState('user');
 
+  // 🔥 Hook de eventos
+  const { events, loading } = useEvents();
+
   useEffect(() => {
-    AsyncStorage.getItem('userRole').then(r => {
+    AsyncStorage.getItem('userRole').then((r) => {
       if (r) setRole(r);
     });
   }, []);
@@ -29,7 +38,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>EVENT MASTER</Text>
@@ -37,8 +46,12 @@ export default function HomeScreen() {
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Image source={require('../assets/images/lupa.png')} style={styles.searchIcon} resizeMode="contain" />
-        <TextInput 
+        <Image
+          source={require('../assets/images/lupa.png')}
+          style={styles.searchIcon}
+          resizeMode="contain"
+        />
+        <TextInput
           style={styles.searchInput}
           placeholder="Buscar eventos..."
           placeholderTextColor={colors.text}
@@ -47,17 +60,36 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Listado Principal */}
+      {/* Lista */}
       <FlatList
-        data={MOCK_EVENTS}
+        data={events}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
-        ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles. Cargando desde API...</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            {loading ? 'Cargando eventos...' : 'No hay eventos disponibles'}
+          </Text>
+        }
         renderItem={({ item }) => (
-          <EventCard 
+          <EventCard
             title={item.title}
-            subtitle={`${item.location} • ${item.startTime ? new Date(item.startTime).toLocaleDateString() : ''}`}
-            salesPercentage={item.totalCapacity ? Math.round(((item.zones || []).reduce((s, z) => s + (z.occupied || 0), 0) / item.totalCapacity) * 100) : 0}
+            subtitle={`${item.location} • ${
+              item.startTime
+                ? new Date(item.startTime).toLocaleDateString()
+                : ''
+            }`}
+            salesPercentage={
+              item.totalCapacity
+                ? Math.round(
+                    ((item.zones || []).reduce(
+                      (s, z) => s + (z.occupied || 0),
+                      0
+                    ) /
+                      item.totalCapacity) *
+                      100
+                  )
+                : 0
+            }
             primaryColor={'#fa6203'}
             imageUrl={item.imageUrl}
             onPress={() => handleEventPress(item._id)}
@@ -65,7 +97,7 @@ export default function HomeScreen() {
         )}
       />
 
-      {/* Barra de Navegación */}
+      {/* BottomNav */}
       <BottomNav activeRoute="home" role={role} />
     </View>
   );
@@ -77,7 +109,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingTop: 60, // Compensar el notch/barra de estado
+    paddingTop: 60,
     paddingBottom: 20,
     alignItems: 'center',
   },
@@ -113,12 +145,12 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100, // Espacio para que el BottomNav no tape los ultimos items
+    paddingBottom: 100,
   },
   emptyText: {
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 40,
     fontSize: 14,
-  }
+  },
 });

@@ -1,70 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { BottomNav } from '../src/components/BottomNav';
+import api from '../src/services/api';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StyleSheet } from 'react-native';
 
 export default function AdminProfileScreen() {
   const router = useRouter();
   const [adminInfo, setAdminInfo] = useState(null);
 
   useEffect(() => {
-    // TODO (Chuy): Fetch profile info here with Axios
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/auth/me');
+        setAdminInfo(res.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
-  // Gets first letter if no photo, e.g. "A"
-  const getInitial = (name) => name ? name.charAt(0).toUpperCase() : '?';
-
-  const handleLogout = () => {
-    // Logic to clear token will go here
+  const handleLogout = async () => {
+    await SecureStore.deleteItemAsync('authToken');
+    await AsyncStorage.multiRemove(['userRole', 'cache_profile']);
     router.replace('/');
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>PERFIL DE ADMINISTRADOR</Text>
-        </View>
+  const getInitial = (name) => name ? name.charAt(0).toUpperCase() : '?';
 
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView>
         {adminInfo ? (
-          <View style={styles.profileSection}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>{getInitial(adminInfo.name)}</Text>
-            </View>
-            <Text style={styles.nameText}>{adminInfo.name}</Text>
-            <Text style={styles.emailText}>{adminInfo.email}</Text>
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleText}>{adminInfo.role}</Text>
-            </View>
+          <View>
+            <Text>{getInitial(adminInfo.name)}</Text>
+            <Text>{adminInfo.name}</Text>
+            <Text>{adminInfo.email}</Text>
+            <Text>{adminInfo.role}</Text>
           </View>
         ) : (
-          <View style={[styles.profileSection, { paddingVertical: 40 }]}>
-            <Text style={{color: '#94a3b8'}}>Cargando perfil...</Text>
-          </View>
+          <Text>Cargando perfil...</Text>
         )}
 
-        <View style={styles.settingsSection}>
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingItemText}>Ajustes de Cuenta</Text>
-            <Text style={styles.settingItemArrow}>{'>'}</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingItemText}>Gestión de Equipo</Text>
-            <Text style={styles.settingItemArrow}>{'>'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingItemText}>Centro de Ayuda</Text>
-            <Text style={styles.settingItemArrow}>{'>'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>CERRAR SESIÓN</Text>
+        <TouchableOpacity onPress={handleLogout}>
+          <Text>CERRAR SESIÓN</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -72,7 +56,6 @@ export default function AdminProfileScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

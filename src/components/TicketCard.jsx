@@ -1,25 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { colors } from '../theme/colors';
+import { StyleSheet } from 'react-native';
 
-export const TicketCard = ({ title, date, status, onCancel }) => {
+export const TicketCard = ({ title, date, status, qr, onCancel }) => {
   const isCompleted = status === 'completed';
 
   return (
-    <View style={[styles.card, isCompleted && styles.completedCard]}>
-      <View style={styles.infoContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.date}>{date}</Text>
-      </View>
+    <View style={{ padding: 15, borderBottomWidth: 1, borderColor: '#333' }}>
+      <Text style={{ color: '#fff', fontSize: 16 }}>{title}</Text>
+      <Text style={{ color: '#aaa' }}>{date}</Text>
+
+      <Text style={{ color: '#00ffcc', marginTop: 10 }}>
+        QR: {qr}
+      </Text>
 
       {!isCompleted && (
-        <TouchableOpacity onPress={onCancel} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>CANCEL</Text>
+        <TouchableOpacity onPress={onCancel}>
+          <Text style={{ color: 'red', marginTop: 10 }}>CANCEL</Text>
         </TouchableOpacity>
       )}
-      
+
       {isCompleted && (
-        <Text style={styles.completedText}>Completed</Text>
+        <Text style={{ color: 'green' }}>Completed</Text>
       )}
     </View>
   );

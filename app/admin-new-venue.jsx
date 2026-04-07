@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../src/services/api';
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, StatusBar, Image,
@@ -7,33 +8,28 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../src/theme/colors';
 import { AppTextInput } from '../src/components/AppTextInput';
+import { validators } from '../src/utils/validators';
 
 export default function AdminNewVenueScreen() {
   const router = useRouter();
   const [image, setImage] = useState(null);
 
-  // ── Campos requeridos por POST /places ────────────────────────────────────
-  const [name, setName]           = useState('');
+  const [name, setName] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('');
-
-  // location → GeoJSON { type: "Point", coordinates: [lng, lat] }
-  const [latitude, setLatitude]   = useState('');
+  const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
 
-  // address (requerido en el schema)
-  const [street, setStreet]       = useState('');
-  const [city, setCity]           = useState('');
-  const [state, setState]         = useState('');
-  const [country, setCountry]     = useState('');
-  const [zipCode, setZipCode]     = useState('');
+  const [street, setStreet] = useState('');
+  const [city, setCity] = useState('');
+  const [stateName, setStateName] = useState('');
+  const [country, setCountry] = useState('');
+  const [zipCode, setZipCode] = useState('');
 
-  // Opcionales
   const [contactPhone, setContactPhone] = useState('');
 
-  // ── Image picker ──────────────────────────────────────────────────────────
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [16, 9],
       quality: 1,
@@ -41,27 +37,60 @@ export default function AdminNewVenueScreen() {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  // TODO (Chuy): Usar este payload en POST /places con JWT en header x-auth-token
-  // Requiere rol admin. La API también acepta defaultZones y amenities (opcionales).
-  // const payload = {
-  //   name,
-  //   maxCapacity: Number(maxCapacity),
-  //   location: {
-  //     type: "Point",
-  //     coordinates: [Number(longitude), Number(latitude)],  // ← [lng, lat] orden GeoJSON
-  //   },
-  //   address: { street, city, state, country, zipCode },
-  //   contactPhone,       // opcional
-  //   defaultZones: [],   // opcional: [{ name: "VIP", capacity: 5000, description: "..." }]
-  //   amenities: [],      // opcional: ["Parking", "WiFi", "Accesibilidad"]
-  // };
+  const handleCreateVenue = async () => {
+
+    // VALIDACIONES
+    if (!validators.required(name)) return alert('Nombre requerido');
+    if (!validators.capacity(maxCapacity)) return alert('Capacidad inválida');
+
+    if (!validators.coordinate(latitude)) return alert('Latitud inválida');
+    if (!validators.coordinate(longitude)) return alert('Longitud inválida');
+
+    if (!validators.required(street)) return alert('Calle requerida');
+    if (!validators.required(city)) return alert('Ciudad requerida');
+    if (!validators.required(stateName)) return alert('Estado requerido');
+    if (!validators.required(country)) return alert('País requerido');
+
+    if (!validators.zipCode(zipCode)) return alert('Código postal inválido');
+
+    if (contactPhone && !validators.phone(contactPhone)) {
+      return alert('Teléfono inválido');
+    }
+
+    try {
+      const payload = {
+        name,
+        maxCapacity: Number(maxCapacity),
+        location: {
+          type: "Point",
+          coordinates: [Number(longitude), Number(latitude)],
+        },
+        address: {
+          street,
+          city,
+          state: stateName,
+          country,
+          zipCode,
+        },
+        contactPhone,
+      };
+
+      await api.post('/places', payload);
+
+      alert('Sede creada');
+      router.back();
+
+    } catch (error) {
+      console.error(error.response?.data);
+      alert('Error al crear sede');
+    }
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>{'<'}</Text>
@@ -70,117 +99,92 @@ export default function AdminNewVenueScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Image Upload */}
         <TouchableOpacity style={styles.imageUploadArea} onPress={pickImage}>
           {image ? (
             <Image source={{ uri: image }} style={styles.previewImage} />
           ) : (
             <>
-              <View style={styles.uploadIconContainer}>
-                <Text style={styles.uploadIconText}>+</Text>
-              </View>
               <Text style={styles.uploadHint}>AGREGAR FOTO DE LA SEDE</Text>
             </>
           )}
         </TouchableOpacity>
 
-        {/* ── Form ─────────────────────────────────────────────────────────── */}
-        <View style={styles.formContainer}>
+       <View style={styles.formContainer}>
+  <Text style={styles.fieldLabel}>VENUE NAME</Text>
+  <AppTextInput
+    value={name}
+    onChangeText={setName}
+    placeholder="Ej: Salón Los Pinos"
+  />
 
-          {/* Name */}
-          <Text style={styles.fieldLabel}>VENUE NAME</Text>
-          <AppTextInput
-            placeholder="Ej. Estadio Metropolitano"
-            value={name}
-            onChangeText={setName}
-          />
+  <Text style={styles.fieldLabel}>MAX CAPACITY</Text>
+  <AppTextInput
+    value={maxCapacity}
+    onChangeText={setMaxCapacity}
+    placeholder="Ej: 200"
+    keyboardType="numeric"
+  />
 
-          {/* Capacity */}
-          <Text style={styles.fieldLabel}>MAX CAPACITY</Text>
-          <AppTextInput
-            placeholder="Ej. 22000"
-            value={maxCapacity}
-            onChangeText={setMaxCapacity}
-            keyboardType="numeric"
-          />
+  <Text style={styles.fieldLabel}>LATITUDE</Text>
+  <AppTextInput
+    value={latitude}
+    onChangeText={setLatitude}
+    placeholder="Ej: 21.8853"
+  />
 
-          {/* ── Coordinates (GeoJSON requerido por la API) ────────────────── */}
-          <Text style={styles.sectionLabel}>COORDENADAS (GEOLOCALIZACIÓN)</Text>
-          <Text style={styles.hint}>
-            Puedes obtenerlas en Google Maps → clic derecho sobre el lugar.
-          </Text>
+  <Text style={styles.fieldLabel}>LONGITUDE</Text>
+  <AppTextInput
+    value={longitude}
+    onChangeText={setLongitude}
+    placeholder="Ej: -102.2916"
+  />
 
-          <Text style={styles.fieldLabel}>LATITUD</Text>
-          <AppTextInput
-            placeholder="Ej. 19.4975"
-            value={latitude}
-            onChangeText={setLatitude}
-            keyboardType="decimal-pad"
-          />
+  <Text style={styles.fieldLabel}>STREET</Text>
+  <AppTextInput
+    value={street}
+    onChangeText={setStreet}
+    placeholder="Ej: Av. Universidad 123"
+  />
 
-          <Text style={styles.fieldLabel}>LONGITUD</Text>
-          <AppTextInput
-            placeholder="Ej. -99.1764"
-            value={longitude}
-            onChangeText={setLongitude}
-            keyboardType="decimal-pad"
-          />
+  <Text style={styles.fieldLabel}>CITY</Text>
+  <AppTextInput
+    value={city}
+    onChangeText={setCity}
+    placeholder="Ej: Aguascalientes"
+  />
 
-          {/* ── Address ───────────────────────────────────────────────────── */}
-          <Text style={styles.sectionLabel}>DIRECCIÓN</Text>
+  <Text style={styles.fieldLabel}>STATE</Text>
+  <AppTextInput
+    value={stateName}
+    onChangeText={setStateName}
+    placeholder="Ej: Aguascalientes"
+  />
 
-          <Text style={styles.fieldLabel}>CALLE Y NÚMERO</Text>
-          <AppTextInput
-            placeholder="Ej. Av. de las Granjas 800"
-            value={street}
-            onChangeText={setStreet}
-          />
+  <Text style={styles.fieldLabel}>COUNTRY</Text>
+  <AppTextInput
+    value={country}
+    onChangeText={setCountry}
+    placeholder="Ej: México"
+  />
 
-          <Text style={styles.fieldLabel}>CIUDAD</Text>
-          <AppTextInput
-            placeholder="Ej. CDMX"
-            value={city}
-            onChangeText={setCity}
-          />
+  <Text style={styles.fieldLabel}>ZIP CODE</Text>
+  <AppTextInput
+    value={zipCode}
+    onChangeText={setZipCode}
+    placeholder="Ej: 20000"
+    keyboardType="numeric"
+  />
 
-          <Text style={styles.fieldLabel}>ESTADO</Text>
-          <AppTextInput
-            placeholder="Ej. Azcapotzalco"
-            value={state}
-            onChangeText={setState}
-          />
-
-          <Text style={styles.fieldLabel}>PAÍS</Text>
-          <AppTextInput
-            placeholder="Ej. México"
-            value={country}
-            onChangeText={setCountry}
-          />
-
-          <Text style={styles.fieldLabel}>CÓDIGO POSTAL</Text>
-          <AppTextInput
-            placeholder="Ej. 02250"
-            value={zipCode}
-            onChangeText={setZipCode}
-            keyboardType="numeric"
-          />
-
-          {/* ── Opcionales ────────────────────────────────────────────────── */}
-          <Text style={styles.sectionLabel}>CONTACTO (OPCIONAL)</Text>
-
-          <Text style={styles.fieldLabel}>TELÉFONO</Text>
-          <AppTextInput
-            placeholder="Ej. +525512345678"
-            value={contactPhone}
-            onChangeText={setContactPhone}
-            keyboardType="phone-pad"
-          />
-
-        </View>
-
-        {/* Submit */}
-        <TouchableOpacity style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>+ CREATE VENUE</Text>
+  <Text style={styles.fieldLabel}>PHONE</Text>
+  <AppTextInput
+    value={contactPhone}
+    onChangeText={setContactPhone}
+    placeholder="Ej: 4491234567"
+    keyboardType="phone-pad"
+  />
+</View>
+        <TouchableOpacity style={styles.primaryButton} onPress={handleCreateVenue}>
+          <Text style={styles.primaryButtonText}>CREATE VENUE</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

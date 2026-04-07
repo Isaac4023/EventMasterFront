@@ -1,28 +1,26 @@
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { FlatList, Image, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { FlatList, Text, TextInput, View } from 'react-native';
 import { BottomNav } from '../src/components/BottomNav';
 import { EventCard } from '../src/components/EventCard';
 import { colors } from '../src/theme/colors';
+import api from '../src/services/api';
 
 export default function StaffHomeScreen() {
   const router = useRouter();
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // TODO (Chuy): Llamar GET /event y poblar el array
-  // Cada evento: { _id, title, description, location, startTime, endTime,
-  //   status, totalCapacity, zones: [{ name, capacity, occupied, price }] }
   const fetchEvents = async () => {
     try {
-      setLoading(true);
-      // const res = await api.get('/event');
-      // setEvents(res.data);
-      setEvents([]);
-      setLoading(false);
+      const res = await api.get('/event');
+      setEvents(res.data);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error(error);
+    } finally {
       setLoading(false);
     }
   };
@@ -31,67 +29,40 @@ export default function StaffHomeScreen() {
     fetchEvents();
   }, []);
 
-  const handleEventPress = (eventId) => {
-    router.push('/staff-scanner');
-  };
-
-  const filteredEvents = events.filter(event => 
+  const filteredEvents = events.filter(event =>
     (event.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={{ flex: 1 }}>
+      <TextInput
+        placeholder="Buscar eventos..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>EVENT MASTER</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Image source={require('../assets/images/lupa.png')} style={styles.searchIcon} resizeMode="contain" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar eventos..."
-          placeholderTextColor={colors.text}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-
-      {/* Events List */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <Text style={{ color: '#fff' }}>Cargando eventos...</Text>
-        </View>
+        <Text>Cargando...</Text>
       ) : (
         <FlatList
           data={filteredEvents}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos disponibles.</Text>}
           renderItem={({ item }) => (
             <EventCard
               title={item.title}
-              subtitle={`${item.location || ''} • ${item.startTime ? new Date(item.startTime).toLocaleDateString() : ''}`}
-              salesPercentage={item.totalCapacity ? Math.round(((item.zones || []).reduce((s, z) => s + (z.occupied || 0), 0) / item.totalCapacity) * 100) : 0}
+              subtitle={item.location}
+              salesPercentage={0}
               primaryColor={'#fa6203'}
-              imageUrl={item.imageUrl}
-              onPress={() => handleEventPress(item._id)}
-              buttonText="VER DETALLES"
+              onPress={() => router.push(`/staff-scanner?id=${item._id}`)}
             />
           )}
         />
       )}
 
-      {/* Barra de Navegación */}
       <BottomNav activeRoute="home" role="staff" />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
