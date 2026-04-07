@@ -19,15 +19,19 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../src/hooks/useAuth';
 import { validators } from '../src/utils/validators';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { register } = useAuth();
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // ❌ quitar prototipo
+  const handleRegister = () => {
+    if (!validators.name(name)) {
+      return Alert.alert('Error', 'Nombre inválido (solo letras)');
+    }
+
     if (!validators.email(email)) {
       return Alert.alert('Error', 'Email inválido');
     }
@@ -39,7 +43,7 @@ export default function LoginScreen() {
       );
     }
 
-    login(email, password, router);
+    register(name, email, password, router);
   };
 
   return (
@@ -56,7 +60,14 @@ export default function LoginScreen() {
           />
         </View>
 
-        <Text style={styles.title}>Bienvenido</Text>
+        <Text style={styles.title}>Crea tu cuenta</Text>
+
+        <AppTextInput
+          placeholder="Nombre completo"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+        />
 
         <AppTextInput
           placeholder="Email"
@@ -74,17 +85,17 @@ export default function LoginScreen() {
         />
 
         <AppButton
-          title="Ingresar"
-          onPress={handleLogin}
-          style={styles.loginButton}
+          title="Registrarse"
+          onPress={handleRegister}
+          style={styles.registerButton}
         />
 
-        <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>
-            ¿No tienes cuenta?{' '}
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>
+            ¿Ya tienes cuenta?{' '}
           </Text>
-          <TouchableOpacity onPress={() => router.push('/register')}>
-            <Text style={styles.registerLink}>Regístrate</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.loginLink}>Ingresa aquí</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -116,19 +127,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 30,
   },
-  loginButton: {
+  registerButton: {
     marginTop: 20,
   },
-  registerContainer: {
+  loginContainer: {
     flexDirection: 'row',
     marginTop: 20,
   },
-  registerText: {
+  loginText: {
     color: colors.textSecondary,
     fontSize: 12,
   },
-  registerLink: {
-    color: colors.danger,
+  loginLink: {
+    color: colors.primary,
     fontSize: 12,
   },
 });
