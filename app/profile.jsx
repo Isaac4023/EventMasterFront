@@ -22,7 +22,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   
   const handleLogout = () => {
-    logout(router);
+    logout();
   };
 
   // Si no hay usuario y no está cargando, algo salió mal o no ha cargado el context

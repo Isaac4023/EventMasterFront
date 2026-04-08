@@ -9,6 +9,7 @@ import {
   Image,
   ScrollView,
   StatusBar,
+  Alert,
 } from 'react-native';
 
 import { AppTextInput } from '../src/components/AppTextInput';
@@ -33,11 +34,9 @@ export default function RegisterScreen() {
   const availableRoles = [
     { id: 'user', label: 'USUARIO' },
     { id: 'staff', label: 'STAFF' },
-    { id: 'artist', label: 'ARTISTA' },
-    { id: 'organizer', label: 'ORGANIZADOR' }
   ];
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     let hasError = false;
     const newErrors = {};
 
@@ -59,7 +58,26 @@ export default function RegisterScreen() {
     setErrors(newErrors);
 
     if (!hasError) {
-      register(name, email, password, role, router);
+      console.log('Intentando registro:', { name, email, role });
+      const result = await register(name, email, password, role);
+      console.log('Resultado registro:', result);
+
+      if (result.success) {
+        const successMsg = 'Usuario registrado correctamente. Redirigiendo al inicio de sesión...';
+        if (Platform.OS === 'web') {
+          alert(`¡Éxito! ${successMsg}`);
+          router.replace('/');
+        } else {
+          Alert.alert('¡Éxito!', successMsg, [{ text: 'OK', onPress: () => router.replace('/') }]);
+        }
+      } else {
+        const errMsg = result.msg || 'No se pudo completar el registro';
+        if (Platform.OS === 'web') {
+          alert(`Error de Registro: ${errMsg}`);
+        } else {
+          Alert.alert('Error de Registro', errMsg);
+        }
+      }
     }
   };
 

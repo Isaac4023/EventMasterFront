@@ -25,7 +25,7 @@ export default function AdminProfileScreen() {
   }, []);
 
   const handleLogout = () => {
-    logout(router);
+    logout();
   };
 
   const getInitial = (name) => name ? name.charAt(0).toUpperCase() : '?';

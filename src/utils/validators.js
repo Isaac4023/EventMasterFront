@@ -1,15 +1,37 @@
+/**
+ * Validadores globales de datos mediante RegEx.
+ * Cumple con los requisitos técnicos de validación estricta.
+ */
 export const validators = {
-  email: (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+  /**
+   * Valida email estándar.
+   */
+  email: (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+  },
 
-  password: (val) =>
-    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/.test(val),
+  /**
+   * Valida contraseña: Min 6 caracteres, al menos una letra y un número.
+   */
+  password: (password) => {
+    const re = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    return re.test(password);
+  },
 
-  name: (val) =>
-    /^[A-Za-záéíóúñÁÉÍÓÚÑ\s]{2,50}$/.test(val),
+  /**
+   * Valida nombre: Solo letras y espacios, min 2 caracteres.
+   */
+  name: (name) => {
+    const re = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,50}$/;
+    return re.test(name);
+  },
 
-  required: (val) => val && val.trim().length > 0,
-  capacity: (val) => /^[1-9]\d*$/.test(val),
-  phone: (val) => /^\+?\d{10,15}$/.test(val),
-  coordinate: (val) => /^-?\d+(\.\d+)?$/.test(val),
-  zipCode: (val) => /^\d{5}$/.test(val),
+  /**
+   * Valida teléfono: Entre 8 y 15 dígitos numéricos.
+   */
+  phone: (phone) => {
+    const re = /^\d{8,15}$/;
+    return re.test(phone);
+  }
 };

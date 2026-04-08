@@ -1,109 +1,89 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-import { fetchWithCache } from '../utils/fetchWithCache';
-import { Alert } from 'react-native';
+import { storage } from '../helpers/storage';
 
 /**
- * Hook para la gestión integral de eventos.
- * Soporta CRUD completo y cacheo para visualización offline.
+ * Hook para la gestión de eventos.
+ * Implementa sincronización offline mediante AsyncStorage.
  */
 export const useEvents = () => {
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingEvent, setLoadingEvent] = useState(false);
   const [error, setError] = useState(null);
 
-  const [event, setEvent] = useState(null);
-  const [loadingEvent, setLoadingEvent] = useState(false);
-
-  // Obtener lista de eventos (Público / Cacheado)
-  const getEvents = useCallback(async () => {
+  /**
+   * Obtiene la lista global de eventos.
+   * Intenta refrescar desde la API y guarda en caché.
+   */
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const data = await fetchWithCache('/event', 'cache_events');
-      if (Array.isArray(data)) {
-        setEvents(data);
-      } else {
-        setEvents([]);
-      }
+      const res = await api.get('/event');
+      setEvents(res.data);
+      // Guardamos en caché para modo offline
+      await storage.saveCache('cached_events', res.data);
     } catch (err) {
-      console.error('Error fetching events:', err);
-      setError('No se pudieron cargar los eventos');
+      // Si falla, intentamos cargar desde caché
+      const cachedData = await storage.getCache('cached_events');
+      if (cachedData) {
+        setEvents(cachedData);
+        console.warn('Cargando eventos desde caché (Offline)');
+      }
+      setError(err.msg || 'Error al obtener eventos');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Obtener un solo evento por ID
+  /**
+   * Obtiene un evento específico por su ID.
+   */
   const getEventById = useCallback(async (id) => {
-    if (!id) return null;
     setLoadingEvent(true);
     try {
       const res = await api.get(`/event/${id}`);
       setEvent(res.data);
-      return res.data;
+      return { success: true, data: res.data };
     } catch (err) {
-      console.error(`Error fetching event ${id}:`, err);
-      setError('Error al cargar detalles del evento');
-      return null;
+      return { success: false, msg: err.msg };
     } finally {
       setLoadingEvent(false);
     }
   }, []);
 
-  // Crear un nuevo evento (Admin/Organizer)
+  /**
+   * Crea un nuevo evento (Admin/Organizer).
+   */
   const createEvent = async (eventData) => {
     setLoading(true);
     try {
       const res = await api.post('/event/new', eventData);
-      Alert.alert('Éxito', 'Evento publicado correctamente');
-      await getEvents(); // Refrescar lista local
-      return res.data;
+      await fetchEvents(); // Refrescamos lista
+      return { success: true, data: res.data };
     } catch (err) {
-      // Manejo de errores mejorado (Req 2)
-      const msg = err?.response?.data?.msg || 'Error al crear el evento';
-      Alert.alert('Error', msg);
-      throw err;
+      return { success: false, msg: err.msg };
     } finally {
       setLoading(false);
     }
   };
 
-  // Actualizar evento existente
-  const updateEvent = async (id, updateData) => {
-    setLoading(true);
+  /**
+   * Obtiene disponibilidad de zonas de un evento.
+   */
+  const getZoneAvailability = async (id) => {
     try {
-      const res = await api.patch(`/event/${id}`, updateData);
-      Alert.alert('Éxito', 'Evento actualizado');
-      await getEvents();
-      return res.data;
+      const res = await api.get(`/event/${id}/availability`);
+      return { success: true, data: res.data };
     } catch (err) {
-      const msg = err?.response?.data?.msg || 'Error al actualizar';
-      Alert.alert('Error', msg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Cancelar evento (Borrado lógico)
-  const deleteEvent = async (id) => {
-    setLoading(true);
-    try {
-      await api.delete(`/event/${id}`);
-      Alert.alert('Éxito', 'Evento cancelado');
-      await getEvents();
-    } catch (err) {
-      const msg = err?.response?.data?.msg || 'Error al cancelar';
-      Alert.alert('Error', msg);
-    } finally {
-      setLoading(false);
+      return { success: false, msg: err.msg };
     }
   };
 
   useEffect(() => {
-    getEvents();
-  }, [getEvents]);
+    fetchEvents();
+  }, [fetchEvents]);
 
   return {
     events,
@@ -111,10 +91,9 @@ export const useEvents = () => {
     loading,
     loadingEvent,
     error,
-    refresh: getEvents,
+    refresh: fetchEvents,
     getEventById,
     createEvent,
-    updateEvent,
-    deleteEvent
+    getZoneAvailability
   };
 };

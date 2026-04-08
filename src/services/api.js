@@ -1,42 +1,60 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../helpers/storage';
 
 /**
- * Instancia de Axios configurada para EventMaster.
- * Incluye interceptores para inyección de Token y manejo de errores.
+ * Servicio central de API utilizando Axios.
+ * Implementa interceptores para gestión de tokens JWT y errores globales.
  */
 const api = axios.create({
   baseURL: 'https://event-master-eight.vercel.app/api',
-  timeout: 15000, // Aumentado ligeramente para conexiones lentas
-  headers: { 'Content-Type': 'application/json' },
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Interceptor de Petición: Inyectar JWT en cada request (Req 1)
-api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('authToken');
-  if (token) {
-    config.headers['x-auth-token'] = token;
+// Interceptor de Peticiones: Adjunta el token JWT si existe
+api.interceptors.request.use(
+  async (config) => {
+    const token = await storage.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-}, (error) => Promise.reject(error));
+);
 
-// Interceptor de Respuesta: Manejo centralizado de errores
+// Interceptor de Respuestas: Manejo global de errores y sesión expirada
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Si la API retorna 401, el token es inválido o expiró
-    if (error.response?.status === 401) {
-      await SecureStore.deleteItemAsync('authToken');
+    if (error.response) {
+      // Si el servidor responde con 401 (Unauthorized), posiblemente el token expiró
+      if (error.response.status === 401) {
+        // Podríamos redirigir al login o limpiar almacenamiento
+        console.warn('Sesión expirada o no autorizada.');
+      }
+      
+      // Retornamos el mensaje de error del backend si existe
+      return Promise.reject({
+        status: error.response.status,
+        msg: error.response.data?.msg || 'Error en el servidor',
+        data: error.response.data
+      });
+    } else if (error.request) {
+      // Error de red (No hubo respuesta)
+      return Promise.reject({
+        msg: 'No se pudo conectar con el servidor. Revisa tu conexión.'
+      });
+    } else {
+      // Otro tipo de error
+      return Promise.reject({
+        msg: error.message
+      });
     }
-    
-    // Normalización de errores para los hooks
-    const customError = {
-      message: error.response?.data?.msg || error.message || 'Error de conexión',
-      status: error.response?.status,
-      data: error.response?.data
-    };
-
-    return Promise.reject(customError);
   }
 );
 

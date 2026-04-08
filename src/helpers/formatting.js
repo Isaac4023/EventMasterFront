@@ -1,46 +1,40 @@
 /**
- * Utilidades de formateo para EventMaster.
+ * Funciones auxiliares para formateo de datos (Fechas, Moneda, etc.)
  */
+export const formatting = {
+  /**
+   * Formatea una fecha ISO a un formato legible (ej: "Lunes, 15 de Noviembre")
+   */
+  date: (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('es-ES', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(date);
+    } catch (e) {
+      return dateString;
+    }
+  },
 
-// FORMATEAR FECHA: ISO -> "24 Abr, 2026" o "Viernes, 24 de Abril"
-export const formatDate = (dateString, type = 'short') => {
-  if (!dateString) return 'Fecha TBD';
-  const date = new Date(dateString);
-  
-  if (type === 'short') {
-    return date.toLocaleDateString('es-MX', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
+  /**
+   * Formatea un número a moneda (ej: "$2,500.00")
+   */
+  currency: (amount) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    }).format(amount);
+  },
+
+  /**
+   * Capitaliza la primera letra de cada palabra
+   */
+  capitalize: (text) => {
+    if (!text) return '';
+    return text.replace(/\b\w/g, (l) => l.toUpperCase());
   }
-  
-  return date.toLocaleDateString('es-MX', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  });
-};
-
-// FORMATEAR MONEDA: Number -> "$2,500 MXN"
-export const formatCurrency = (amount) => {
-  if (amount === 0) return 'Gratis';
-  if (!amount) return 'N/A';
-  
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-  }).format(amount);
-};
-
-// CAPITALIZAR: "juan perez" -> "Juan Perez"
-export const capitalize = (str) => {
-  if (!str) return '';
-  return str.replace(/\b\w/g, (l) => l.toUpperCase());
-};
-
-// ABREVIAR NÚMEROS: 1500 -> "1.5k"
-export const formatCompactNumber = (number) => {
-  if (number < 1000) return number.toString();
-  return (number / 1000).toFixed(1) + 'k';
 };

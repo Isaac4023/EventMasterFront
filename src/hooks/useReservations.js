@@ -1,82 +1,71 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import api from '../services/api';
-import { fetchWithCache } from '../utils/fetchWithCache';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
 
 /**
- * Hook para la gestión de reservas y verificación de tickets.
- * Implementa persistencia offline para tickets del usuario.
+ * Hook para la gestión de reservas y tickets.
+ * NOTA: Los endpoints de este módulo están marcados como PENDIENTES 
+ * en el backend según el reporte de integración.
  */
 export const useReservations = () => {
-  const [myTickets, setMyTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Obtener tickets del usuario actual
-  const getMyTickets = useCallback(async () => {
+  /**
+   * Crea una nueva reserva para un evento.
+   * Endpoint esperado: POST /reservation
+   */
+  const createReservation = async (eventId, quantity = 1, zoneName = 'General') => {
     setLoading(true);
     setError(null);
     try {
-      // Req 3: Visualización offline de tickets ya cargados
-      const data = await fetchWithCache('/reservation/me', 'cache_user_tickets');
-      setMyTickets(Array.isArray(data) ? data : []);
+      // Intentamos la petición al endpoint (fail-fast si no existe)
+      const res = await api.post('/reservation', { eventId, quantity, zoneName });
+      return { success: true, data: res.data };
     } catch (err) {
-      console.error('Error fetching tickets:', err);
-      setError('No se pudieron cargar tus tickets');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Realizar una nueva reserva
-  const createReservation = async (eventId) => {
-    setLoading(true);
-    try {
-      const res = await api.post('/reservation/new', { event: eventId });
-      Alert.alert('Éxito', 'Reserva realizada. ¡Disfruta el evento!');
-      await getMyTickets(); // Refrescar lista
-      return res.data;
-    } catch (err) {
-      // Manejo de error con lógica offline (Req 3 sugerido)
-      const msg = err?.response?.data?.msg || 'Error al procesar reserva';
-      
-      if (!err.response) {
-        // Posible error de red, podríamos guardar para sincronización futura
-        Alert.alert('Sin Conexión', 'La reserva se intentará cuando recuperes señal');
-      } else {
-        Alert.alert('Error', msg);
-      }
-      throw err;
+      setError(err.msg || 'Error al procesar la reserva. Endpoint no disponible.');
+      return { success: false, msg: err.msg };
     } finally {
       setLoading(false);
     }
   };
 
-  // Verificación de tickets (Solo STAFF)
+  /**
+   * Obtiene los tickets del usuario logueado.
+   * Endpoint esperado: GET /reservation/me
+   */
+  const getMyReservations = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/reservation/me');
+      return { success: true, data: res.data };
+    } catch (err) {
+      return { success: false, msg: err.msg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Verifica un ticket por QR (Solo Staff).
+   * Endpoint esperado: POST /ticket/verify
+   */
   const verifyTicket = async (ticketId) => {
     setLoading(true);
     try {
       const res = await api.post('/ticket/verify', { ticketId });
       return { success: true, data: res.data };
     } catch (err) {
-      const msg = err?.response?.data?.msg || 'Ticket inválido o ya usado';
-      return { success: false, msg };
+      return { success: false, msg: err.msg };
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    getMyTickets();
-  }, [getMyTickets]);
-
   return {
-    myTickets,
     loading,
     error,
-    refresh: getMyTickets,
     createReservation,
+    getMyReservations,
     verifyTicket
   };
 };

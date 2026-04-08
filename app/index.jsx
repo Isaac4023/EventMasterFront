@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Image,
   StatusBar,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 import { AppTextInput } from '../src/components/AppTextInput';
@@ -29,7 +31,7 @@ export default function LoginScreen() {
   // Estados de error para feedback visual individual
   const [errors, setErrors] = useState({ email: '', password: '' });
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     let hasError = false;
     const newErrors = { email: '', password: '' };
 
@@ -46,7 +48,20 @@ export default function LoginScreen() {
     setErrors(newErrors);
 
     if (!hasError) {
-      login(email, password, router);
+      console.log('Intentando login con:', email);
+      const result = await login(email, password);
+      console.log('Resultado login:', result);
+      
+      if (result.success) {
+        router.replace('/home');
+      } else {
+        const message = result.msg || 'Credenciales incorrectas';
+        if (Platform.OS === 'web') {
+          alert(`Error: ${message}`);
+        } else {
+          Alert.alert('Error', message);
+        }
+      }
     }
   };
 
