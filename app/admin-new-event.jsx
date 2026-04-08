@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import api from '../src/services/api';
-import { validators } from '../src/utils/validators';
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, StatusBar, Image, Platform
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView,
+  TouchableOpacity, 
+  StatusBar, 
+  Image, 
+  Platform,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,11 +17,16 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { colors } from '../src/theme/colors';
 import { AppTextInput } from '../src/components/AppTextInput';
+import { validators } from '../src/utils/validators';
+import { useEvents } from '../src/hooks/useEvents';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+/**
+ * Pantalla de creación de eventos para administradores y organizadores.
+ * Valida formatos de fecha ISO y capacidades antes de la persistencia.
+ */
+
+// Combina fecha y hora seleccionada en un string ISO 8601
 const toISO = (date, time) => {
-  // Combina la fecha y hora seleccionadas en formato ISO 8601
-  // Ej.: 2026-11-15T09:00:00.000Z
   const [h, m] = time.split(':');
   const d = new Date(date);
   d.setHours(Number(h) || 0, Number(m) || 0, 0, 0);
@@ -27,27 +38,28 @@ const formatDisplayDate = (date) =>
 
 export default function AdminNewEventScreen() {
   const router = useRouter();
+  const { createEvent, loading } = useEvents();
+  
   const [image, setImage] = useState(null);
 
-  // ── Start fields ──────────────────────────────────────────────────────────
-  const [startDate, setStartDate]       = useState(new Date());
+  // Estados de Fecha y Hora
+  const [startDate, setStartDate] = useState(new Date());
   const [startDateText, setStartDateText] = useState('');
-  const [startTimeText, setStartTimeText] = useState(''); // "HH:MM"
+  const [startTimeText, setStartTimeText] = useState('');
   const [showStartDate, setShowStartDate] = useState(false);
 
-  // ── End fields ────────────────────────────────────────────────────────────
-  const [endDate, setEndDate]         = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const [endDateText, setEndDateText] = useState('');
-  const [endTimeText, setEndTimeText] = useState(''); // "HH:MM"
+  const [endTimeText, setEndTimeText] = useState('');
   const [showEndDate, setShowEndDate] = useState(false);
 
-  // ── Form fields ───────────────────────────────────────────────────────────
-  const [title, setTitle]       = useState('');
+  // Campos del Formulario
+  const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [description, setDescription] = useState('');
+  const [errors, setErrors] = useState({});
 
-  // ── Image picker ──────────────────────────────────────────────────────────
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -58,12 +70,12 @@ export default function AdminNewEventScreen() {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  // ── Date picker handlers ──────────────────────────────────────────────────
   const onChangeStartDate = (_, selected) => {
     setShowStartDate(Platform.OS === 'ios');
     if (selected) {
       setStartDate(selected);
       setStartDateText(formatDisplayDate(selected));
+      if (errors.startDate) setErrors(prev => ({...prev, startDate: ''}));
     }
   };
 
@@ -76,71 +88,46 @@ export default function AdminNewEventScreen() {
   };
 
   const handleCreate = async () => {
+    const newErrors = {};
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+    if (!validators.required(title)) newErrors.title = 'Requerido';
+    if (!validators.required(location)) newErrors.location = 'Requerido';
+    if (!validators.capacity(capacity)) newErrors.capacity = 'Número > 0';
+    if (!validators.required(description)) newErrors.description = 'Requerido';
+    if (!validators.required(startDateText)) newErrors.startDate = 'Requerido';
+    if (!timeRegex.test(startTimeText)) newErrors.startTime = 'HH:MM';
+    if (!timeRegex.test(endTimeText)) newErrors.endTime = 'HH:MM';
 
-  if (!validators.required(title)) {
-    return alert('El título es requerido');
-  }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
-  if (!validators.required(location)) {
-    return alert('La ubicación es requerida');
-  }
+    try {
+      const payload = {
+        title,
+        description,
+        startTime: toISO(startDate, startTimeText),
+        endTime: toISO(endDate, endTimeText),
+        location,
+        totalCapacity: Number(capacity),
+        status: 'published',
+      };
 
-  if (!validators.capacity(capacity)) {
-    return alert('Capacidad inválida');
-  }
+      await createEvent(payload);
+      router.back();
 
-  if (!validators.required(description)) {
-    return alert('La descripción es requerida');
-  }
-
-  if (!validators.required(startDateText)) {
-    return alert('Fecha de inicio requerida');
-  }
-
-  if (!validators.required(endDateText)) {
-    return alert('Fecha de fin requerida');
-  }
-
-  // formato HH:MM
-  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-  if (!timeRegex.test(startTimeText)) {
-    return alert('Hora de inicio inválida (HH:MM)');
-  }
-
-  if (!timeRegex.test(endTimeText)) {
-    return alert('Hora de fin inválida (HH:MM)');
-  }
-
-  try {
-    const payload = {
-      title,
-      description,
-      startTime: toISO(startDate, startTimeText),
-      endTime: toISO(endDate, endTimeText),
-      location,
-      totalCapacity: Number(capacity),
-      status: 'published',
-    };
-
-    await api.post('/event/new', payload);
-
-    alert('Evento creado');
-    router.back();
-
-  } catch (error) {
-    console.error(error.response?.data);
-    alert('Error al crear evento');
-  }
-};
+    } catch (error) {
+      console.error('Create event failure:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>{'<'}</Text>
@@ -149,131 +136,130 @@ export default function AdminNewEventScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Image Upload */}
         <TouchableOpacity style={styles.imageUploadArea} onPress={pickImage}>
           {image ? (
             <Image source={{ uri: image }} style={styles.previewImage} />
           ) : (
-            <>
+            <View style={{ alignItems: 'center' }}>
               <View style={styles.uploadIconContainer}>
                 <Text style={styles.uploadIconText}>+</Text>
               </View>
-              <Text style={styles.uploadHint}>AGREGAR FOTO</Text>
-            </>
+              <Text style={styles.uploadHint}>AGREGAR PORTADA</Text>
+            </View>
           )}
         </TouchableOpacity>
 
-        {/* Form Fields */}
         <View style={styles.formContainer}>
-
-          {/* Title */}
           <Text style={styles.fieldLabel}>NOMBRE DEL EVENTO</Text>
           <AppTextInput
-            placeholder="Ej. Concierto de Rock 2026"
+            placeholder="Ej. Gala Estelar 2026"
             value={title}
-            onChangeText={setTitle}
+            onChangeText={(t) => { setTitle(t); if(errors.title) setErrors({...errors, title: ''}); }}
+            error={!!errors.title}
+            errorMessage={errors.title}
           />
 
-          {/* Location */}
-          <Text style={styles.fieldLabel}>UBICACIÓN</Text>
+          <Text style={styles.fieldLabel}>UBICACIÓN / RECINTO</Text>
           <AppTextInput
-            placeholder="Ej. Auditorio Nacional"
+            placeholder="Ej. Centro de Convenciones"
             value={location}
-            onChangeText={setLocation}
+            onChangeText={(t) => { setLocation(t); if(errors.location) setErrors({...errors, location: ''}); }}
+            error={!!errors.location}
+            errorMessage={errors.location}
           />
 
-          {/* ── Start DateTime ─────────────────────────────────────── */}
-          <Text style={styles.fieldLabel}>FECHA DE INICIO</Text>
-          {Platform.OS === 'web' ? (
-            <AppTextInput
-              placeholder="mm/dd/yyyy"
-              value={startDateText}
-              onChangeText={setStartDateText}
-            />
-          ) : (
-            <TouchableOpacity onPress={() => setShowStartDate(true)}>
-              <View pointerEvents="none">
-                <AppTextInput placeholder="mm/dd/yyyy" value={startDateText} editable={false} />
-              </View>
-            </TouchableOpacity>
-          )}
-          {showStartDate && (
-            <DateTimePicker
-              value={startDate}
-              mode="date"
-              display="default"
-              onChange={onChangeStartDate}
-            />
-          )}
-
-          <Text style={styles.fieldLabel}>HORA DE INICIO (HH:MM)</Text>
-          <AppTextInput
-            placeholder="Ej. 09:00"
-            value={startTimeText}
-            onChangeText={setStartTimeText}
-            keyboardType="numbers-and-punctuation"
-          />
-
-          {/* ── End DateTime ───────────────────────────────────────── */}
-          <Text style={styles.fieldLabel}>FECHA DE FIN</Text>
-          {Platform.OS === 'web' ? (
-            <AppTextInput
-              placeholder="mm/dd/yyyy"
-              value={endDateText}
-              onChangeText={setEndDateText}
-            />
-          ) : (
-            <TouchableOpacity onPress={() => setShowEndDate(true)}>
-              <View pointerEvents="none">
-                <AppTextInput placeholder="mm/dd/yyyy" value={endDateText} editable={false} />
-              </View>
-            </TouchableOpacity>
-          )}
-          {showEndDate && (
-            <DateTimePicker
-              value={endDate}
-              mode="date"
-              display="default"
-              onChange={onChangeEndDate}
-            />
-          )}
-
-          <Text style={styles.fieldLabel}>HORA DE FIN (HH:MM)</Text>
-          <AppTextInput
-            placeholder="Ej. 18:00"
-            value={endTimeText}
-            onChangeText={setEndTimeText}
-            keyboardType="numbers-and-punctuation"
-          />
-
-          {/* Capacity */}
-          <Text style={styles.fieldLabel}>CAPACIDAD MÁXIMA</Text>
-          <AppTextInput
-            placeholder="Ej. 10000"
-            value={capacity}
-            onChangeText={setCapacity}
-            keyboardType="numeric"
-          />
-
-          {/* Description */}
-          <Text style={styles.fieldLabel}>DESCRIPCIÓN</Text>
-          <View style={styles.textAreaContainer}>
-            <AppTextInput
-              placeholder="Descripción del evento..."
-              multiline
-              numberOfLines={4}
-              value={description}
-              onChangeText={setDescription}
-            />
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={styles.fieldLabel}>FECHA INICIO</Text>
+              <TouchableOpacity onPress={() => setShowStartDate(true)}>
+                <View pointerEvents="none">
+                  <AppTextInput 
+                    value={startDateText} 
+                    editable={false} 
+                    placeholder="mm/dd/yyyy" 
+                    error={!!errors.startDate}
+                    errorMessage={errors.startDate}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>HORA (HH:MM)</Text>
+              <AppTextInput
+                placeholder="09:00"
+                value={startTimeText}
+                onChangeText={(t) => { setStartTimeText(t); if(errors.startTime) setErrors({...errors, startTime: ''}); }}
+                keyboardType="numbers-and-punctuation"
+                error={!!errors.startTime}
+                errorMessage={errors.startTime}
+              />
+            </View>
           </View>
 
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={styles.fieldLabel}>FECHA FIN</Text>
+              <TouchableOpacity onPress={() => setShowEndDate(true)}>
+                <View pointerEvents="none">
+                  <AppTextInput value={endDateText} editable={false} placeholder="mm/dd/yyyy" />
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>HORA (HH:MM)</Text>
+              <AppTextInput
+                placeholder="21:00"
+                value={endTimeText}
+                onChangeText={(t) => { setEndTimeText(t); if(errors.endTime) setErrors({...errors, endTime: ''}); }}
+                keyboardType="numbers-and-punctuation"
+                error={!!errors.endTime}
+                errorMessage={errors.endTime}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.fieldLabel}>AFORO / CAPACIDAD</Text>
+          <AppTextInput
+            placeholder="Ej. 5000"
+            value={capacity}
+            onChangeText={(t) => { setCapacity(t); if(errors.capacity) setErrors({...errors, capacity: ''}); }}
+            keyboardType="numeric"
+            error={!!errors.capacity}
+            errorMessage={errors.capacity}
+          />
+
+          <Text style={styles.fieldLabel}>DESCRIPCIÓN DEL EVENTO</Text>
+          <AppTextInput
+            placeholder="Detalles sobre el evento..."
+            multiline
+            numberOfLines={4}
+            value={description}
+            onChangeText={(t) => { setDescription(t); if(errors.description) setErrors({...errors, description: ''}); }}
+            style={{ height: 100, textAlignVertical: 'top' }}
+            error={!!errors.description}
+            errorMessage={errors.description}
+          />
         </View>
 
-        {/* Submit */}
-        <TouchableOpacity style={styles.primaryButton} onPress={handleCreate}>
-          <Text style={styles.primaryButtonText}>+ PUBLICAR EVENTO</Text>
+        <TouchableOpacity 
+          style={[styles.primaryButton, loading && { opacity: 0.7 }]} 
+          onPress={handleCreate}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.primaryButtonText}>PUBLICAR EVENTO</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
+
+      {showStartDate && (
+        <DateTimePicker value={startDate} mode="date" display="default" onChange={onChangeStartDate} />
+      )}
+      {showEndDate && (
+        <DateTimePicker value={endDate} mode="date" display="default" onChange={onChangeEndDate} />
+      )}
     </View>
   );
 }
@@ -289,50 +275,50 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   backButton: {
-    width: 40, height: 40,
+    width: 44, height: 44,
     justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 20,
+    borderRadius: 22,
   },
-  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  backText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   headerTitle: {
-    color: colors.primary, fontSize: 16,
-    fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
+    color: colors.primary, fontSize: 13,
+    fontWeight: '900', letterSpacing: 2,
   },
   imageUploadArea: {
-    backgroundColor: '#1e293b',
-    borderWidth: 2,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     borderStyle: 'dashed',
-    borderRadius: 24,
-    height: 144,
+    borderRadius: 20,
+    height: 160,
     justifyContent: 'center', alignItems: 'center',
-    marginBottom: 20, overflow: 'hidden',
+    marginBottom: 25, overflow: 'hidden',
   },
   previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   uploadIconContainer: {
     width: 40, height: 40, borderRadius: 20,
-    borderWidth: 2, borderColor: '#fff',
+    borderWidth: 1.5, borderColor: colors.primary,
     justifyContent: 'center', alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  uploadIconText: { color: '#fff', fontSize: 24, lineHeight: 28 },
-  uploadHint: { color: '#94a3b8', fontSize: 10, fontWeight: '700' },
-  formContainer: { gap: 8 },
+  uploadIconText: { color: colors.primary, fontSize: 24, fontWeight: '300' },
+  uploadHint: { color: colors.textSecondary, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  formContainer: { gap: 15 },
+  row: { flexDirection: 'row', width: '100%' },
   fieldLabel: {
-    color: '#94a3b8', fontSize: 10,
-    fontWeight: '700', letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 10, marginLeft: 4,
+    color: colors.textSecondary, fontSize: 9,
+    fontWeight: '800', letterSpacing: 1.5,
+    marginBottom: 8, marginLeft: 2,
   },
-  textAreaContainer: { height: 100 },
   primaryButton: {
     backgroundColor: colors.primary,
-    borderRadius: 50, paddingVertical: 15,
-    alignItems: 'center', marginTop: 30,
+    borderRadius: 12, paddingVertical: 18,
+    alignItems: 'center', marginTop: 40,
+    elevation: 4,
   },
   primaryButtonText: {
     color: '#fff', fontSize: 12,
-    fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
+    fontWeight: '900', letterSpacing: 2,
   },
 });

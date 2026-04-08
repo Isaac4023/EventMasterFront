@@ -7,7 +7,7 @@ import {
   Platform,
   TouchableOpacity,
   Image,
-  Alert,
+  StatusBar,
 } from 'react-native';
 
 import { AppTextInput } from '../src/components/AppTextInput';
@@ -15,30 +15,39 @@ import { AppButton } from '../src/components/AppButton';
 import { colors } from '../src/theme/colors';
 import { useRouter } from 'expo-router';
 
-// 🔥 NUEVO
+// 🔥 Hooks y Utilidades
 import { useAuth } from '../src/hooks/useAuth';
 import { validators } from '../src/utils/validators';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Estados de error para feedback visual individual
+  const [errors, setErrors] = useState({ email: '', password: '' });
 
   const handleLogin = () => {
+    let hasError = false;
+    const newErrors = { email: '', password: '' };
+
     if (!validators.email(email)) {
-      return Alert.alert('Error', 'Email inválido');
+      newErrors.email = 'Email inválido o vacío';
+      hasError = true;
     }
 
     if (!validators.password(password)) {
-      return Alert.alert(
-        'Error',
-        'La contraseña debe tener al menos 6 caracteres y contener letras y números'
-      );
+      newErrors.password = 'Contraseña demasiado corta (min 6)';
+      hasError = true;
     }
 
-    login(email, password, router);
+    setErrors(newErrors);
+
+    if (!hasError) {
+      login(email, password, router);
+    }
   };
 
   return (
@@ -46,6 +55,7 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <StatusBar barStyle="light-content" />
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <Image
@@ -55,35 +65,55 @@ export default function LoginScreen() {
           />
         </View>
 
-        <Text style={styles.title}>Bienvenido</Text>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.title}>Bienvenido de nuevo</Text>
+          <Text style={styles.subtitle}>Ingresa tus credenciales para continuar</Text>
+        </View>
 
-        <AppTextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+        <View style={styles.form}>
+          <AppTextInput
+            placeholder="Correo electrónico"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errors.email) setErrors({...errors, email: ''});
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={!!errors.email}
+            errorMessage={errors.email}
+          />
 
-        <AppTextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+          <AppTextInput
+            placeholder="Contraseña"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errors.password) setErrors({...errors, password: ''});
+            }}
+            secureTextEntry
+            error={!!errors.password}
+            errorMessage={errors.password}
+          />
 
-        <AppButton
-          title="Ingresar"
-          onPress={handleLogin}
-          style={styles.loginButton}
-        />
+          <TouchableOpacity style={styles.forgotPassword}>
+            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
+
+          <AppButton
+            title="Ingresar"
+            onPress={handleLogin}
+            loading={loading}
+            style={styles.loginButton}
+          />
+        </View>
 
         <View style={styles.registerContainer}>
           <Text style={styles.registerText}>
-            ¿No tienes cuenta?{' '}
+            ¿No tienes una cuenta?{' '}
           </Text>
           <TouchableOpacity onPress={() => router.push('/register')}>
-            <Text style={styles.registerLink}>Regístrate</Text>
+            <Text style={styles.registerLink}>Crea una aquí</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -103,31 +133,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   logoContainer: {
-    marginBottom: 40,
+    marginBottom: 20,
     alignItems: 'center',
   },
   logo: {
     width: 200,
     height: 80,
   },
+  headerTextContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
   title: {
     color: colors.text,
-    fontSize: 20,
-    marginBottom: 30,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  form: {
+    width: '100%',
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
   },
   loginButton: {
-    marginTop: 20,
+    marginTop: 10,
   },
   registerContainer: {
     flexDirection: 'row',
-    marginTop: 20,
+    marginTop: 30,
   },
   registerText: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
   },
   registerLink: {
-    color: colors.danger,
-    fontSize: 12,
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

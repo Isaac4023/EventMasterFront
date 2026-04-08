@@ -1,10 +1,23 @@
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { colors } from '../theme/colors';
 
-export const AppButton = ({ title, onPress, style }) => {
+export const AppButton = ({ title, onPress, style, loading, disabled }) => {
   return (
-    <TouchableOpacity style={[styles.button, style]} onPress={onPress} activeOpacity={0.8}>
-      <Text style={styles.text}>{title}</Text>
+    <TouchableOpacity 
+      style={[
+        styles.button, 
+        style, 
+        (disabled || loading) && styles.disabled
+      ]} 
+      onPress={onPress} 
+      activeOpacity={0.8}
+      disabled={disabled || loading}
+    >
+      {loading ? (
+        <ActivityIndicator color={colors.text} size="small" />
+      ) : (
+        <Text style={styles.text}>{title}</Text>
+      )}
     </TouchableOpacity>
   );
 };
@@ -23,6 +36,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  disabled: {
+    opacity: 0.5,
   },
   text: {
     color: colors.text,

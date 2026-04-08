@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, StatusBar, TouchableOpacity, TextInput } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  StatusBar, 
+  TouchableOpacity, 
+  TextInput,
+  RefreshControl,
+  Image 
+} from 'react-native';
 import { colors } from '../src/theme/colors';
 import { BottomNav } from '../src/components/BottomNav';
 import { useRouter } from 'expo-router';
 import { useEvents } from '../src/hooks/useEvents';
+import { useAuth } from '../src/hooks/useAuth';
 
+/**
+ * Dashboard Administrativo.
+ * Permite monitorear el estado de ocupación de todos los eventos.
+ */
 export default function AdminDashboard() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { events, loading, refresh } = useEvents();
   const [searchQuery, setSearchQuery] = useState('');
-
-  const { events, loading } = useEvents();
 
   const filteredEvents = events.filter(event => 
     (event.title || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -19,37 +34,40 @@ export default function AdminDashboard() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>{'<'}</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>DASHBOARD</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Search Bar */}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={loading} 
+            onRefresh={refresh} 
+            tintColor={colors.primary} 
+          />
+        }
+      >
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar eventos..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
-        {/* Events List */}
         <View style={styles.eventsContainer}>
           {filteredEvents.map(event => {
-
-            // ✅ CALCULAR AQUÍ (FUERA DEL JSX)
-            const percentage = event.totalCapacity
-              ? Math.round(
-                  ((event.zones || []).reduce((s, z) => s + (z.occupied || 0), 0) /
-                    event.totalCapacity) * 100
-                )
+            const occupied = event.totalCapacity - event.totalAvailable;
+            const percentage = event.totalCapacity > 0
+              ? Math.round((occupied / event.totalCapacity) * 100)
               : 0;
 
             return (
@@ -59,37 +77,44 @@ export default function AdminDashboard() {
                 onPress={() => router.push(`/admin-availability?id=${event._id}`)}
                 activeOpacity={0.8}
               >
-                <View style={styles.imagePlaceholder}>
-                  <Text style={styles.placeholderText}>No Image</Text>
-                </View>
+                {event.imageUrl ? (
+                  <Image source={{ uri: event.imageUrl }} style={styles.cardImage} />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Text style={styles.placeholderText}>SIN IMAGEN</Text>
+                  </View>
+                )}
                 
                 <View style={styles.cardContent}>
                   <Text style={styles.eventTitle}>{event.title}</Text>
-                  <Text style={styles.eventSubtitle}>{event.subtitle}</Text>
+                  <Text style={styles.eventSubtitle}>{event.location} • {event.startTime ? new Date(event.startTime).toLocaleDateString() : ''}</Text>
                   
                   <View style={styles.progressContainer}>
+                    <View style={styles.progressHeader}>
+                      <Text style={styles.progressLabel}>OCUPACIÓN</Text>
+                      <Text style={styles.percentageText}>{percentage}%</Text>
+                    </View>
                     <View style={styles.progressBarBg}>
-                      {/* ✅ USAR percentage AQUÍ */}
                       <View style={[styles.progressBarFill, { width: `${percentage}%` }]} />
                     </View>
-                    <Text style={styles.progressText}>{percentage}% Capacity</Text>
+                    <Text style={styles.statsText}>
+                      {occupied} / {event.totalCapacity} Reservas
+                    </Text>
                   </View>
                 </View>
               </TouchableOpacity>
             );
           })}
 
-          {filteredEvents.length === 0 && (
-            <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text style={{color: '#94a3b8'}}>
-                {loading ? 'Cargando eventos...' : 'No se encontraron eventos.'}
-              </Text>
+          {!loading && filteredEvents.length === 0 && (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No se encontraron eventos activos.</Text>
             </View>
           )}
         </View>
       </ScrollView>
 
-      <BottomNav activeRoute="tickets" role="admin" />
+      <BottomNav activeRoute="tickets" role={user?.role} />
     </View>
   );
 }
@@ -101,11 +126,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 30,
+    paddingBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -114,32 +139,25 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 20,
   },
   backText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 24,
   },
   headerTitle: {
     color: colors.primary,
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '900',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   searchContainer: {
-    marginBottom: 20,
+    marginBottom: 25,
   },
   searchInput: {
-    backgroundColor: '#1a232e',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 15,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    height: 50,
     color: '#fff',
     fontSize: 14,
   },
@@ -147,23 +165,26 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   eventCard: {
-    backgroundColor: '#1a232e',
-    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderRadius: 25,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
   },
+  cardImage: {
+    height: 140,
+    width: '100%',
+  },
   imagePlaceholder: {
-    height: 120,
-    backgroundColor: '#334155',
+    height: 100,
+    backgroundColor: '#111',
     justifyContent: 'center',
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderColor: 'rgba(255,255,255,0.05)',
   },
   placeholderText: {
-    color: '#94a3b8',
-    fontWeight: 'bold',
+    color: '#333',
+    fontWeight: '900',
+    fontSize: 10,
     letterSpacing: 1,
   },
   cardContent: {
@@ -171,33 +192,58 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   eventSubtitle: {
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontSize: 12,
-    marginBottom: 20,
+    marginBottom: 25,
   },
   progressContainer: {
-    gap: 8,
+    marginTop: 5,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  progressLabel: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  percentageText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '900',
   },
   progressBarBg: {
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 3,
     overflow: 'hidden',
+    marginBottom: 10,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#ff7a00',
-    borderRadius: 4,
+    backgroundColor: colors.primary,
   },
-  progressText: {
-    color: '#ff7a00',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+  statsText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
   },
-});
+  emptyContainer: {
+    padding: 50,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
+  }
+});

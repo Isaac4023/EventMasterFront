@@ -1,33 +1,54 @@
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View, Text } from 'react-native';
 import { colors } from '../theme/colors';
 
-export const AppTextInput = ({ style, ...props }) => {
+export const AppTextInput = ({ style, error, errorMessage, ...props }) => {
   return (
-    <View style={[styles.container, style]}>
-      <TextInput
-        style={styles.input}
-        placeholderTextColor={colors.textSecondary}
-        {...props}
-      />
+    <View style={styles.outerContainer}>
+      <View style={[
+        styles.container, 
+        style,
+        error && styles.errorBorder
+      ]}>
+        <TextInput
+          style={styles.input}
+          placeholderTextColor="rgba(255,255,255,0.4)"
+          {...props}
+        />
+      </View>
+      {error && errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 50,
-    height: 45,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    marginVertical: 10,
+  outerContainer: {
     width: '100%',
+    marginVertical: 5,
+  },
+  container: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderRadius: 12,
+    height: 52,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    width: '100%',
+  },
+  errorBorder: {
+    borderColor: colors.danger,
   },
   input: {
     color: colors.text,
     fontSize: 14,
-    // fontFamily: 'Open_Sauce_One', // TODO: Load font or match system font
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: 10,
+    marginTop: 4,
+    marginLeft: 12,
+    fontWeight: '600',
   },
 });

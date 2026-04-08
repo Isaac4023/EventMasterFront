@@ -1,30 +1,42 @@
 import React, { useState } from 'react';
-import api from '../src/services/api';
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, StatusBar, Image,
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView,
+  TouchableOpacity, 
+  StatusBar, 
+  Image,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../src/theme/colors';
 import { AppTextInput } from '../src/components/AppTextInput';
+import { AppButton } from '../src/components/AppButton';
 import { validators } from '../src/utils/validators';
+import { usePlaces } from '../src/hooks/usePlaces';
 
+/**
+ * Pantalla de registro de nueva sede.
+ * Solo disponible para administradores.
+ */
 export default function AdminNewVenueScreen() {
   const router = useRouter();
+  const { createPlace, loading } = usePlaces();
   const [image, setImage] = useState(null);
 
+  // Form State
   const [name, setName] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
-
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [stateName, setStateName] = useState('');
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState('México');
   const [zipCode, setZipCode] = useState('');
-
   const [contactPhone, setContactPhone] = useState('');
 
   const pickImage = async () => {
@@ -32,30 +44,21 @@ export default function AdminNewVenueScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [16, 9],
-      quality: 1,
+      quality: 0.8,
     });
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
   const handleCreateVenue = async () => {
-
-    // VALIDACIONES
-    if (!validators.required(name)) return alert('Nombre requerido');
-    if (!validators.capacity(maxCapacity)) return alert('Capacidad inválida');
-
-    if (!validators.coordinate(latitude)) return alert('Latitud inválida');
-    if (!validators.coordinate(longitude)) return alert('Longitud inválida');
-
-    if (!validators.required(street)) return alert('Calle requerida');
-    if (!validators.required(city)) return alert('Ciudad requerida');
-    if (!validators.required(stateName)) return alert('Estado requerido');
-    if (!validators.required(country)) return alert('País requerido');
-
-    if (!validators.zipCode(zipCode)) return alert('Código postal inválido');
-
-    if (contactPhone && !validators.phone(contactPhone)) {
-      return alert('Teléfono inválido');
+    // Validaciones básicas
+    if (!name || !maxCapacity || !latitude || !longitude || !street || !city) {
+      Alert.alert('Datos Incompletos', 'Por favor llena los campos obligatorios.');
+      return;
     }
+
+    if (!validators.capacity(maxCapacity)) return Alert.alert('Error', 'Capacidad inválida');
+    if (!validators.coordinate(latitude)) return Alert.alert('Error', 'Latitud inválida');
+    if (!validators.coordinate(longitude)) return Alert.alert('Error', 'Longitud inválida');
 
     try {
       const payload = {
@@ -73,16 +76,13 @@ export default function AdminNewVenueScreen() {
           zipCode,
         },
         contactPhone,
+        // imageUrl: image, // Si el backend lo soporta directamente o via upload previo
       };
 
-      await api.post('/places', payload);
-
-      alert('Sede creada');
+      await createPlace(payload);
       router.back();
-
     } catch (error) {
-      console.error(error.response?.data);
-      alert('Error al crear sede');
+      console.error('Create venue error:', error);
     }
   };
 
@@ -90,173 +90,209 @@ export default function AdminNewVenueScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backText}>{'<'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>ADD NEW VENUE</Text>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>NUEVA SEDE</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={styles.imageUploadArea} onPress={pickImage}>
           {image ? (
             <Image source={{ uri: image }} style={styles.previewImage} />
           ) : (
-            <>
-              <Text style={styles.uploadHint}>AGREGAR FOTO DE LA SEDE</Text>
-            </>
+            <Text style={styles.uploadHint}>SELECCIONAR FOTO</Text>
           )}
         </TouchableOpacity>
 
-       <View style={styles.formContainer}>
-  <Text style={styles.fieldLabel}>VENUE NAME</Text>
-  <AppTextInput
-    value={name}
-    onChangeText={setName}
-    placeholder="Ej: Salón Los Pinos"
-  />
+        <View style={styles.formContainer}>
+          <Text style={styles.sectionLabel}>INFORMACIÓN GENERAL</Text>
+          
+          <Text style={styles.fieldLabel}>Nombre de la Sede *</Text>
+          <AppTextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="Ej: Auditorio Nacional"
+          />
 
-  <Text style={styles.fieldLabel}>MAX CAPACITY</Text>
-  <AppTextInput
-    value={maxCapacity}
-    onChangeText={setMaxCapacity}
-    placeholder="Ej: 200"
-    keyboardType="numeric"
-  />
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={styles.fieldLabel}>Capacidad *</Text>
+              <AppTextInput
+                value={maxCapacity}
+                onChangeText={setMaxCapacity}
+                placeholder="2500"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1.5 }}>
+              <Text style={styles.fieldLabel}>Teléfono</Text>
+              <AppTextInput
+                value={contactPhone}
+                onChangeText={setContactPhone}
+                placeholder="449 123 4567"
+                keyboardType="phone-pad"
+              />
+            </View>
+          </View>
 
-  <Text style={styles.fieldLabel}>LATITUDE</Text>
-  <AppTextInput
-    value={latitude}
-    onChangeText={setLatitude}
-    placeholder="Ej: 21.8853"
-  />
+          <Text style={styles.sectionLabel}>UBICACIÓN Y COORDENADAS</Text>
+          
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={styles.fieldLabel}>Latitud *</Text>
+              <AppTextInput
+                value={latitude}
+                onChangeText={setLatitude}
+                placeholder="19.4326"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>Longitud *</Text>
+              <AppTextInput
+                value={longitude}
+                onChangeText={setLongitude}
+                placeholder="-99.1332"
+              />
+            </View>
+          </View>
 
-  <Text style={styles.fieldLabel}>LONGITUDE</Text>
-  <AppTextInput
-    value={longitude}
-    onChangeText={setLongitude}
-    placeholder="Ej: -102.2916"
-  />
+          <Text style={styles.fieldLabel}>Calle y Número *</Text>
+          <AppTextInput
+            value={street}
+            onChangeText={setStreet}
+            placeholder="Av. Paseo de la Reforma"
+          />
 
-  <Text style={styles.fieldLabel}>STREET</Text>
-  <AppTextInput
-    value={street}
-    onChangeText={setStreet}
-    placeholder="Ej: Av. Universidad 123"
-  />
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={styles.fieldLabel}>Ciudad *</Text>
+              <AppTextInput
+                value={city}
+                onChangeText={setCity}
+                placeholder="CDMX"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>C.P.</Text>
+              <AppTextInput
+                value={zipCode}
+                onChangeText={setZipCode}
+                placeholder="06000"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
 
-  <Text style={styles.fieldLabel}>CITY</Text>
-  <AppTextInput
-    value={city}
-    onChangeText={setCity}
-    placeholder="Ej: Aguascalientes"
-  />
+          <View style={styles.row}>
+             <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={styles.fieldLabel}>Estado</Text>
+              <AppTextInput
+                value={stateName}
+                onChangeText={setStateName}
+                placeholder="CDMX"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>País</Text>
+              <AppTextInput
+                value={country}
+                onChangeText={setCountry}
+                placeholder="México"
+              />
+            </View>
+          </View>
 
-  <Text style={styles.fieldLabel}>STATE</Text>
-  <AppTextInput
-    value={stateName}
-    onChangeText={setStateName}
-    placeholder="Ej: Aguascalientes"
-  />
+          <View style={{ height: 40 }} />
 
-  <Text style={styles.fieldLabel}>COUNTRY</Text>
-  <AppTextInput
-    value={country}
-    onChangeText={setCountry}
-    placeholder="Ej: México"
-  />
-
-  <Text style={styles.fieldLabel}>ZIP CODE</Text>
-  <AppTextInput
-    value={zipCode}
-    onChangeText={setZipCode}
-    placeholder="Ej: 20000"
-    keyboardType="numeric"
-  />
-
-  <Text style={styles.fieldLabel}>PHONE</Text>
-  <AppTextInput
-    value={contactPhone}
-    onChangeText={setContactPhone}
-    placeholder="Ej: 4491234567"
-    keyboardType="phone-pad"
-  />
-</View>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleCreateVenue}>
-          <Text style={styles.primaryButtonText}>CREATE VENUE</Text>
-        </TouchableOpacity>
+          <AppButton 
+            title={loading ? "CREANDO..." : "GUARDAR SEDE"} 
+            onPress={handleCreateVenue} 
+            disabled={loading}
+          />
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 50 },
+  container: { 
+    flex: 1, 
+    backgroundColor: colors.background 
+  },
+  scrollContent: { 
+    paddingHorizontal: 25, 
+    paddingBottom: 60 
+  },
   header: {
-    paddingTop: 60, paddingBottom: 20,
+    paddingTop: 60, 
+    paddingBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   backButton: {
-    width: 40, height: 40,
-    justifyContent: 'center', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 20,
+    width: 40, 
+    height: 40,
+    justifyContent: 'center',
   },
-  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  backText: { 
+    color: '#fff', 
+    fontSize: 24 
+  },
   headerTitle: {
-    color: colors.primary, fontSize: 14,
-    fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
+    color: colors.primary, 
+    fontSize: 12,
+    fontWeight: '900', 
+    letterSpacing: 2,
   },
   imageUploadArea: {
-    backgroundColor: '#1e293b',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderStyle: 'dashed',
-    borderRadius: 24,
-    height: 144,
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 25, overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 25,
+    height: 160,
+    justifyContent: 'center', 
+    alignItems: 'center',
+    marginBottom: 30, 
+    overflow: 'hidden',
   },
-  previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  uploadIconContainer: {
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: 2, borderColor: '#fff',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 8,
+  previewImage: { 
+    width: '100%', 
+    height: '100%', 
+    resizeMode: 'cover' 
   },
-  uploadIconText: { color: '#fff', fontSize: 20, lineHeight: 22 },
-  uploadHint: { color: colors.primary, fontSize: 10, fontWeight: '900' },
-  formContainer: { gap: 6 },
+  uploadHint: { 
+    color: colors.primary, 
+    fontSize: 9, 
+    fontWeight: '900',
+    letterSpacing: 1
+  },
+  formContainer: { 
+    paddingBottom: 20 
+  },
   sectionLabel: {
-    color: colors.primary,
-    fontSize: 10, fontWeight: '900',
-    letterSpacing: 1.5, textTransform: 'uppercase',
-    marginTop: 20, marginBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(13,154,112,0.3)',
-    paddingBottom: 6,
+    color: '#fff',
+    fontSize: 11, 
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    marginTop: 25, 
+    marginBottom: 15,
+    opacity: 0.8
   },
   fieldLabel: {
-    color: '#94a3b8', fontSize: 10,
-    fontWeight: '700', letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 10, marginLeft: 4,
+    color: colors.textSecondary, 
+    fontSize: 10,
+    fontWeight: '700', 
+    letterSpacing: 0.5,
+    marginBottom: 10,
+    marginLeft: 4,
   },
-  hint: {
-    color: '#475569', fontSize: 11,
-    marginBottom: 4, marginLeft: 4,
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 50, paddingVertical: 15,
-    alignItems: 'center', marginTop: 30,
-  },
-  primaryButtonText: {
-    color: '#fff', fontSize: 11,
-    fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

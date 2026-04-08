@@ -1,19 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { colors } from '../theme/colors';
+import { formatting } from '../helpers/formatting';
 
 export const EventCard = ({ 
   title, 
-  subtitle, // Ej: '30 de Marzo • Auditorio Central'
-  salesPercentage, // Ej: 60 (para 60%)
-  primaryColor = '#fa6203', // Naranja por defecto
+  subtitle, // Se puede recibir completo o construir
+  date,     // Nuevo prop opcional
+  location, // Nuevo prop opcional
+  salesPercentage, 
+  primaryColor = colors.primary, 
   imageUrl,
   onPress,
   buttonText = 'VER BOLETOS'
 }) => {
+  // Construir subtítulo si vienen campos separados
+  const displaySubtitle = subtitle || `${location || ''}${location && date ? ' • ' : ''}${date ? formatting.date(date) : ''}`;
+
   return (
     <View style={styles.card}>
-      {/* Si viene la imagen de la API la mostramos, sino usamos el gradiente simulado de figma */}
       <View style={[styles.imageContainer, !imageUrl && { backgroundColor: primaryColor }]}>
         {imageUrl && (
           <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
@@ -22,9 +24,8 @@ export const EventCard = ({
 
       <View style={styles.infoContainer}>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+        <Text style={styles.subtitle} numberOfLines={1}>{displaySubtitle}</Text>
 
-        {/* Barra de progreso de tickets */}
         <View style={styles.progressBarBackground}>
           <View 
             style={[styles.progressBarFill, { width: `${salesPercentage}%`, backgroundColor: primaryColor }]} 

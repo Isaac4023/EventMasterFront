@@ -7,7 +7,8 @@ import {
   Platform,
   TouchableOpacity,
   Image,
-  Alert,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
 
 import { AppTextInput } from '../src/components/AppTextInput';
@@ -20,29 +21,46 @@ import { validators } from '../src/utils/validators';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, loading } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user');
+
+  const [errors, setErrors] = useState({});
+
+  const availableRoles = [
+    { id: 'user', label: 'USUARIO' },
+    { id: 'staff', label: 'STAFF' },
+    { id: 'artist', label: 'ARTISTA' },
+    { id: 'organizer', label: 'ORGANIZADOR' }
+  ];
 
   const handleRegister = () => {
+    let hasError = false;
+    const newErrors = {};
+
     if (!validators.name(name)) {
-      return Alert.alert('Error', 'Nombre inválido (solo letras)');
+      newErrors.name = 'Solo letras y espacios';
+      hasError = true;
     }
 
     if (!validators.email(email)) {
-      return Alert.alert('Error', 'Email inválido');
+      newErrors.email = 'Formato de email incorrecto';
+      hasError = true;
     }
 
     if (!validators.password(password)) {
-      return Alert.alert(
-        'Error',
-        'La contraseña debe tener al menos 6 caracteres y contener letras y números'
-      );
+      newErrors.password = 'Min 6 caracteres, letras y números';
+      hasError = true;
     }
 
-    register(name, email, password, router);
+    setErrors(newErrors);
+
+    if (!hasError) {
+      register(name, email, password, role, router);
+    }
   };
 
   return (
@@ -50,7 +68,16 @@ export default function RegisterScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← REGRESAR</Text>
+        </TouchableOpacity>
+
         <View style={styles.logoContainer}>
           <Image
             source={require('../assets/images/logo_EventMaster.png')}
@@ -59,45 +86,85 @@ export default function RegisterScreen() {
           />
         </View>
 
-        <Text style={styles.title}>Crea tu cuenta</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Únete a la plataforma</Text>
+          <Text style={styles.subtitle}>Crea una cuenta para gestionar o asistir a eventos</Text>
+        </View>
 
-        <AppTextInput
-          placeholder="Nombre completo"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-        />
+        <View style={styles.form}>
+          <AppTextInput
+            placeholder="Nombre completo"
+            value={name}
+            onChangeText={(text) => {
+              setName(text);
+              if (errors.name) setErrors({...errors, name: ''});
+            }}
+            autoCapitalize="words"
+            error={!!errors.name}
+            errorMessage={errors.name}
+          />
 
-        <AppTextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <AppTextInput
+            placeholder="Correo electrónico"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errors.email) setErrors({...errors, email: ''});
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={!!errors.email}
+            errorMessage={errors.email}
+          />
 
-        <AppTextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+          <AppTextInput
+            placeholder="Contraseña"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errors.password) setErrors({...errors, password: ''});
+            }}
+            secureTextEntry
+            error={!!errors.password}
+            errorMessage={errors.password}
+          />
 
-        <AppButton
-          title="Registrarse"
-          onPress={handleRegister}
-          style={styles.registerButton}
-        />
+          <Text style={styles.roleLabel}>SELECCIONA TU PERFIL</Text>
+          <View style={styles.rolesGrid}>
+            {availableRoles.map((r) => (
+              <TouchableOpacity
+                key={r.id}
+                style={[
+                  styles.roleItem,
+                  role === r.id && styles.roleItemActive
+                ]}
+                onPress={() => setRole(r.id)}
+              >
+                <Text style={[
+                  styles.roleItemText,
+                  role === r.id && styles.roleItemTextActive
+                ]}>
+                  {r.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <AppButton
+            title="Registrarse"
+            onPress={handleRegister}
+            loading={loading}
+            style={styles.registerButton}
+          />
+        </View>
 
         <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>
-            ¿Ya tienes cuenta?{' '}
-          </Text>
+          <Text style={styles.loginText}>¿Ya eres parte de EventMaster? </Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.loginLink}>Ingresa aquí</Text>
+            <Text style={styles.loginLink}>Inicia sesión</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -107,38 +174,93 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  backButton: {
+    marginBottom: 20,
+  },
+  backButtonText: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   logoContainer: {
-    marginBottom: 40,
     alignItems: 'center',
+    marginBottom: 30,
   },
   logo: {
     width: 200,
     height: 80,
   },
-  title: {
-    color: colors.text,
-    fontSize: 20,
+  header: {
     marginBottom: 30,
   },
-  registerButton: {
-    marginTop: 20,
+  title: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
-  loginContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-  },
-  loginText: {
+  subtitle: {
     color: colors.textSecondary,
     fontSize: 12,
   },
+  form: {
+    width: '100%',
+  },
+  roleLabel: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginTop: 20,
+    marginBottom: 15,
+  },
+  rolesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 25,
+  },
+  roleItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  roleItemActive: {
+    backgroundColor: colors.primary + '20', // Opacidad baja del color primario
+    borderColor: colors.primary,
+  },
+  roleItemText: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  roleItemTextActive: {
+    color: colors.primary,
+  },
+  registerButton: {
+    marginTop: 10,
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 40,
+  },
+  loginText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
   loginLink: {
     color: colors.primary,
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

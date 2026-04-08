@@ -7,52 +7,55 @@ import {
   TextInput,
   Image,
   StatusBar,
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { EventCard } from '../src/components/EventCard';
 import { BottomNav } from '../src/components/BottomNav';
-import { useRouter } from 'expo-router';
-
 import { useEvents } from '../src/hooks/useEvents';
+import { useAuth } from '../src/hooks/useAuth';
 
+/**
+ * Pantalla principal del cliente.
+ * Muestra el feed de eventos próximos y redirige a admin/staff si corresponde.
+ */
 export default function HomeScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { events, loading, refresh } = useEvents();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { events, loading } = useEvents();
-
+  // Redirección por rol al montar
   useEffect(() => {
-  const loadRole = async () => {
-    const storedRole = await AsyncStorage.getItem('userRole');
-
-    if (storedRole === 'admin') {
+    if (user?.role === 'admin') {
       router.replace('/admin-home');
-    }
-
-    if (storedRole === 'staff') {
+    } else if (user?.role === 'staff') {
       router.replace('/staff-home');
     }
-  };
-
-  loadRole();
-}, []);
-
+  }, [user]);
 
   const handleEventPress = (id) => {
     router.push(`/event-details?id=${id}`);
   };
 
+  const filteredEvents = events.filter(event => {
+    const query = searchQuery.toLowerCase();
+    return (
+      event.title?.toLowerCase().includes(query) ||
+      event.location?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>EVENT MASTER</Text>
       </View>
 
-      {/* Search Bar */}
       <View style={styles.searchContainer}>
         <Image
           source={require('../assets/images/lupa.png')}
@@ -61,52 +64,54 @@ export default function HomeScreen() {
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar eventos..."
-          placeholderTextColor={colors.text}
+          placeholder="Buscar eventos o ciudades..."
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
-      {/* Lista */}
       <FlatList
-        data={events}
+        data={filteredEvents}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={loading} 
+            onRefresh={refresh} 
+            tintColor={colors.primary} 
+          />
+        }
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            {loading ? 'Cargando eventos...' : 'No hay eventos disponibles'}
-          </Text>
+          !loading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                No se encontraron eventos para tu búsqueda.
+              </Text>
+            </View>
+          ) : (
+            <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 20 }} />
+          )
         }
         renderItem={({ item }) => (
           <EventCard
             title={item.title}
-            subtitle={`${item.location} • ${
-              item.startTime
-                ? new Date(item.startTime).toLocaleDateString()
-                : ''
-            }`}
+            location={item.location}
+            date={item.startTime}
             salesPercentage={
-              item.totalCapacity
-                ? Math.round(
-                    ((item.zones || []).reduce(
-                      (s, z) => s + (z.occupied || 0),
-                      0
-                    ) /
-                      item.totalCapacity) *
-                      100
-                  )
+              item.totalCapacity > 0
+                ? Math.round(((item.totalCapacity - item.totalAvailable) / item.totalCapacity) * 100)
                 : 0
             }
-            primaryColor={'#fa6203'}
+            primaryColor={colors.primary}
             imageUrl={item.imageUrl}
             onPress={() => handleEventPress(item._id)}
           />
         )}
       />
 
-      {/* BottomNav */}
-      <BottomNav activeRoute="home" />
+      <BottomNav activeRoute="home" role={user?.role} />
     </View>
   );
 }
@@ -123,33 +128,30 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: colors.primary,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   searchContainer: {
-    backgroundColor: '#1a232e',
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderRadius: 50,
-    height: 45,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 20,
+    height: 50,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 21,
+    paddingHorizontal: 15,
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 25,
   },
   searchIcon: {
-    width: 17,
-    height: 17,
+    width: 16,
+    height: 16,
     marginRight: 10,
     tintColor: colors.textSecondary,
   },
   searchInput: {
     flex: 1,
-    color: colors.text,
+    color: '#fff',
     fontSize: 14,
-    fontWeight: '300',
   },
   listContent: {
     paddingHorizontal: 20,
@@ -158,7 +160,8 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: 50,
     fontSize: 14,
+    fontWeight: '600',
   },
 });

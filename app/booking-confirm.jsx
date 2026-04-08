@@ -1,100 +1,154 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, StatusBar
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  StatusBar, 
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import api from '../src/services/api';
+import { useReservations } from '../src/hooks/useReservations';
 
+/**
+ * Pantalla de confirmación de reserva.
+ * Verifica disponibilidad en tiempo real antes de permitir la transacción.
+ */
 export default function BookingConfirmScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { createReservation, loading: bookingLoading } = useReservations();
 
   const [event, setEvent] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [fetching, setFetching] = useState(true);
 
+  // Cargar disponibilidad actual del evento
   useEffect(() => {
-    const fetchEvent = async () => {
+    const fetchAvailability = async () => {
       try {
         const res = await api.get(`/event/${id}/availability`);
         setEvent(res.data);
       } catch (error) {
-        console.error(error);
+        console.error('Error fetching availability:', error);
+        Alert.alert('Error', 'No se pudo obtener la disponibilidad del evento');
+      } finally {
+        setFetching(false);
       }
     };
 
-    if (id) fetchEvent();
+    if (id) fetchAvailability();
   }, [id]);
 
-  // 🔥 MOCK SI NO HAY DATA
-  const mockEvent = {
-    title: 'Evento demo',
-    startTime: new Date().toISOString(),
-    totalCapacity: 100,
-    totalAvailable: 50,
+  const increment = () => {
+    if (event && quantity < event.totalAvailable) {
+      setQuantity(prev => prev + 1);
+    }
   };
 
-  const currentEvent = event || mockEvent;
-
-  const totalOccupied = currentEvent.totalCapacity - currentEvent.totalAvailable;
-
-  const increment = () =>
-    setQuantity(prev => Math.min(prev + 1, currentEvent.totalAvailable || 1));
-
-  const decrement = () =>
+  const decrement = () => {
     setQuantity(prev => Math.max(prev - 1, 1));
-
-  const soldPercent = currentEvent.totalCapacity > 0
-    ? (totalOccupied / currentEvent.totalCapacity) * 100
-    : 0;
-
-  const handleConfirm = () => {
-    alert('Reserva completada con éxito');
-    router.push('/tickets');
   };
+
+  const handleConfirm = async () => {
+    try {
+      // Por ahora la API parece manejar 1 reserva por llamada, 
+      // si soporta cantidad la enviaremos, sino repetimos o informamos.
+      await createReservation(id);
+      router.replace('/tickets');
+    } catch (error) {
+      // El error ya es manejado por el hook
+    }
+  };
+
+  if (fetching) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const totalOccupied = (event?.totalCapacity || 0) - (event?.totalAvailable || 0);
+  const soldPercent = event?.totalCapacity > 0
+    ? (totalOccupied / event.totalCapacity) * 100
+    : 0;
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>EVENT NAME</Text>
+        <Text style={styles.headerTitle}>DETALLES DE RESERVA</Text>
       </View>
 
       <View style={styles.content}>
-
-        <Text style={styles.eventName}>{currentEvent.title}</Text>
+        <Text style={styles.eventName}>{event?.title || 'Evento'}</Text>
 
         <Text style={styles.eventDate}>
-          {currentEvent.startTime
-            ? new Date(currentEvent.startTime).toLocaleDateString()
-            : ''}
+          {event?.startTime ? new Date(event.startTime).toLocaleDateString(undefined, {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+          }) : ''}
         </Text>
 
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${soldPercent}%` }]} />
+        <View style={styles.progressSection}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${soldPercent}%` }]} />
+          </View>
+          <View style={styles.progressLabels}>
+            <Text style={styles.ticketsLabel}>
+              {totalOccupied} / {event?.totalCapacity} VENDIDOS
+            </Text>
+            <Text style={styles.availabilityLabel}>
+              {event?.totalAvailable} DISPONIBLES
+            </Text>
+          </View>
         </View>
-
-        <Text style={styles.ticketsLabel}>
-          {totalOccupied}/{currentEvent.totalCapacity} Tickets Sold
-        </Text>
 
         <View style={styles.counterContainer}>
-          <TouchableOpacity style={styles.counterSide} onPress={decrement}>
-            <Text style={styles.counterSideText}>-</Text>
+          <TouchableOpacity 
+            style={styles.counterBtn} 
+            onPress={decrement}
+            disabled={quantity <= 1}
+          >
+            <Text style={[styles.counterBtnText, quantity <= 1 && { opacity: 0.3 }]}>-</Text>
           </TouchableOpacity>
 
-          <Text style={styles.counterValue}>{quantity}</Text>
+          <View style={styles.quantityDisplay}>
+            <Text style={styles.counterValue}>{quantity}</Text>
+            <Text style={styles.quantityLabel}>ENTRADA(S)</Text>
+          </View>
 
-          <TouchableOpacity style={styles.counterSide} onPress={increment}>
-            <Text style={styles.counterSideText}>+</Text>
+          <TouchableOpacity 
+            style={styles.counterBtn} 
+            onPress={increment}
+            disabled={event && quantity >= event.totalAvailable}
+          >
+            <Text style={[
+              styles.counterBtnText, 
+              event && quantity >= event.totalAvailable && { opacity: 0.3 }
+            ]}>
+              +
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-          <Text style={styles.confirmButtonText}>CONFIRMAR RESERVA</Text>
+        <TouchableOpacity 
+          style={[styles.confirmButton, bookingLoading && { opacity: 0.7 }]} 
+          onPress={handleConfirm}
+          disabled={bookingLoading || event?.totalAvailable === 0}
+        >
+          {bookingLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.confirmButtonText}>
+              {event?.totalAvailable === 0 ? 'AGOTADO' : 'CONFIRMAR RESERVA'}
+            </Text>
+          )}
         </TouchableOpacity>
-
       </View>
     </View>
   );
@@ -103,95 +157,113 @@ export default function BookingConfirmScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0e151c',
+    backgroundColor: colors.background,
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 15,
+    paddingBottom: 20,
     alignItems: 'center',
   },
   headerTitle: {
-    color: '#0d9a70',
-    fontSize: 14,
+    color: colors.primary,
+    fontSize: 12,
     fontWeight: '900',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: 30,
+    paddingTop: 30,
   },
   eventName: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 6,
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   eventDate: {
-    color: '#94a3b8',
-    fontSize: 12,
-    marginBottom: 14,
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginBottom: 40,
+    textTransform: 'capitalize',
+  },
+  progressSection: {
+    marginBottom: 40,
   },
   progressTrack: {
-    height: 8,
-    backgroundColor: '#0a0e14',
-    borderRadius: 10,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 3,
     overflow: 'hidden',
-    marginBottom: 6,
+    marginBottom: 12,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#fa6203',
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+  },
+  progressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   ticketsLabel: {
-    color: '#fa6203',
+    color: colors.primary,
     fontSize: 10,
-    fontWeight: '600',
-    marginBottom: 30,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  availabilityLabel: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
   },
   counterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(250, 98, 3, 0.35)',
-    borderRadius: 24,
-    height: 64,
-    marginBottom: 24,
-    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 20,
+    padding: 10,
+    marginBottom: 50,
   },
-  counterSide: {
-    flex: 1,
-    alignItems: 'flex-start',
+  counterBtn: {
+    width: 60,
+    height: 60,
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  counterSideText: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '900',
+  counterBtnText: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '300',
+  },
+  quantityDisplay: {
+    flex: 1,
+    alignItems: 'center',
   },
   counterValue: {
-    flex: 1,
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '900',
-    textAlign: 'center',
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  quantityLabel: {
+    color: colors.textSecondary,
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: 2,
   },
   confirmButton: {
-    backgroundColor: '#135b78',
-    borderRadius: 50,
-    paddingVertical: 14,
+    backgroundColor: colors.primary,
+    borderRadius: 15,
+    paddingVertical: 18,
     alignItems: 'center',
-    shadowColor: '#000',
+    elevation: 5,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
   confirmButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
+    color: '#fff',
+    fontSize: 13,
     fontWeight: '900',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
 });

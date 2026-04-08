@@ -1,61 +1,61 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, StatusBar, Alert } from 'react-native';
+import React from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  StatusBar, 
+  ActivityIndicator,
+  RefreshControl 
+} from 'react-native';
 import { colors } from '../src/theme/colors';
 import { TicketCard } from '../src/components/TicketCard';
 import { BottomNav } from '../src/components/BottomNav';
+import { useReservations } from '../src/hooks/useReservations';
 
-// TODO (Chuy): Poblar con reservaciones reales del usuario autenticado
-const MOCK_RESERVATIONS = [
-  {
-    id: '1',
-    title: 'Evento Demo',
-    date: new Date().toLocaleDateString(),
-    status: 'activo'
-  }
-];
-
+/**
+ * Pantalla de visualización de tickets/reservas del usuario.
+ * Recupera datos de la API con soporte para visualización offline de datos cacheados.
+ */
 export default function TicketsScreen() {
-  const [reservations, setReservations] = useState(MOCK_RESERVATIONS);
-
-  const handleCancel = (id) => {
-    Alert.alert(
-      'Cancelar Reserva',
-      '¿Estás seguro de que deseas cancelar tu asistencia a este evento?',
-      [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Sí, cancelar', 
-          style: 'destructive',
-          onPress: () => {
-            console.log('Cancelar evento', id);
-            // TODO: Call API to cancel reservation
-          }
-        }
-      ]
-    );
-  };
+  const { myTickets, loading, refresh } = useReservations();
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>MY RESERVATIONS</Text>
+        <Text style={styles.headerTitle}>MIS RESERVAS</Text>
       </View>
 
-      {/* Lista de Reservaciones */}
       <FlatList
-        data={reservations}
-        keyExtractor={(item) => item.id}
+        data={myTickets}
+        keyExtractor={(item) => item._id || item.id}
         contentContainerStyle={styles.listContent}
-        ListEmptyComponent={<Text style={styles.emptyText}>No tienes reservaciones activas ni finalizadas.</Text>}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={loading} 
+            onRefresh={refresh} 
+            tintColor={colors.primary} 
+          />
+        }
+        ListEmptyComponent={
+          !loading && (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                Aún no tienes reservaciones activas.
+              </Text>
+            </View>
+          )
+        }
         renderItem={({ item }) => (
           <TicketCard 
-            title={item.title}
-            date={item.date}
+            title={item.event?.title || 'Evento'}
+            date={item.event?.startTime ? new Date(item.event.startTime).toLocaleDateString() : 'Pendiente'}
             status={item.status}
-            onCancel={() => handleCancel(item.id)}
+            // ID de reserva para cancelación futura si se implementa
+            onCancel={() => {}} 
           />
         )}
       />
@@ -77,20 +77,24 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: colors.primary,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 2,
     textTransform: 'uppercase',
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100, // Espacio para el BottomNav
+    paddingBottom: 100,
     paddingTop: 10,
+  },
+  emptyContainer: {
+    marginTop: 100,
+    alignItems: 'center',
   },
   emptyText: {
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 40,
     fontSize: 14,
+    fontWeight: '600',
   }
 });

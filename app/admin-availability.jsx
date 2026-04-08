@@ -1,40 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  StatusBar,
+  ActivityIndicator,
+  RefreshControl 
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import api from '../src/services/api';
 
+/**
+ * Pantalla de disponibilidad para el Administrador.
+ * Muestra el calendario de ocupación de una sede o evento.
+ */
 export default function AdminAvailabilityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
+  const [loading, setLoading] = useState(true);
+  const [eventData, setEventData] = useState(null);
   const [calendarDays, setCalendarDays] = useState([]);
-  const [bookings, setBookings] = useState([]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Intentar obtener detalles del evento/disponibilidad
+      const res = await api.get(`/event/${id}`);
+      setEventData(res.data);
+      
+      // Simulación de días de ocupación (Placeholder para lógica de calendario real)
+      setCalendarDays(Array.from({ length: 30 }, (_, i) => ({
+        day: i + 1,
+        status: i % 7 === 0 ? 'busy' : i % 10 === 0 ? 'event' : 'empty'
+      })));
+
+    } catch (error) {
+      console.error('Error fetching availability:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get(`/event/${id}/availability`);
-
-        setCalendarDays([
-          { day: 1, status: 'event' },
-          { day: 2, status: 'busy' },
-          { day: 3, status: 'empty' },
-        ]);
-
-        setBookings([
-          {
-            name: res.data?.title || 'Evento',
-            date: new Date().toLocaleDateString(),
-            time: '18:00',
-          }
-        ]);
-
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     if (id) fetchData();
   }, [id]);
 
@@ -42,77 +53,71 @@ export default function AdminAvailabilityScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backText}>{'<'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>AVAILABILITY</Text>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>DISPONIBILIDAD</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-        {/* Title */}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={fetchData} tintColor={colors.primary} />
+        }
+      >
         <View style={styles.titleContainer}>
-          <Text style={styles.venueName}>Estadio Azteca</Text>
-          <Text style={styles.subtitle}>Occupancy Schedule</Text>
+          <Text style={styles.venueName}>{eventData?.title || 'Cargando...'}</Text>
+          <Text style={styles.subtitle}>{eventData?.location || 'Verificando agenda...'}</Text>
         </View>
 
-        {/* Calendar */}
-        <View style={styles.calendarCard}>
-          <View style={styles.calendarHeader}>
-            <Text style={styles.monthText}>Mes Actual</Text>
-            <Text style={styles.yearText}>2026</Text>
-          </View>
-          
-          <View style={styles.calendarGrid}>
-            {calendarDays.length > 0 ? calendarDays.map((item, index) => {
-              let bgColor = '#1e293b';
-              let fontColor = '#fff';
+        {loading ? (
+          <ActivityIndicator color={colors.primary} style={{ marginTop: 50 }} />
+        ) : (
+          <View style={styles.calendarCard}>
+            <View style={styles.calendarHeader}>
+              <Text style={styles.monthText}>ABRIL</Text>
+              <Text style={styles.yearText}>2026</Text>
+            </View>
+            
+            <View style={styles.calendarGrid}>
+              {calendarDays.map((item, index) => {
+                let bgColor = 'rgba(255,255,255,0.03)';
+                let fontColor = 'rgba(255,255,255,0.4)';
 
-              if (item.status === 'busy') {
-                bgColor = 'rgba(255, 68, 68, 0.6)';
-              }
+                if (item.status === 'busy') {
+                  bgColor = 'rgba(255, 68, 68, 0.2)';
+                  fontColor = '#ff4444';
+                }
 
-              if (item.status === 'event') {
-                bgColor = colors.primary;
-                fontColor = '#fff';
-              }
+                if (item.status === 'event') {
+                  bgColor = colors.primary;
+                  fontColor = '#fff';
+                }
 
-              return (
-                <View key={index} style={[styles.calendarCell, { backgroundColor: bgColor }]}>
-                  <Text style={[styles.cellText, { color: fontColor }]}>
-                    {item.day}
-                  </Text>
-                </View>
-              );
-            }) : (
-              <Text style={{color: '#94a3b8', fontSize: 12}}>
-                Cargando calendario...
-              </Text>
-            )}
-          </View>
-        </View>
+                return (
+                  <View key={index} style={[styles.calendarCell, { backgroundColor: bgColor }]}>
+                    <Text style={[styles.cellText, { color: fontColor }]}>
+                      {item.day}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
 
-        {/* Bookings */}
-        <View style={styles.bookingsSection}>
-          <Text style={styles.bookingsTitle}>CONFIRMED BOOKINGS</Text>
-          
-          {bookings.length > 0 ? (
-            bookings.map((booking, idx) => (
-              <View key={idx} style={[styles.bookingItem, { borderLeftColor: colors.primary }]}>
-                <Text style={styles.bookingName}>{booking.name}</Text>
-                <Text style={styles.bookingDate}>{booking.date} • {booking.time}</Text>
+            <View style={styles.legend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+                <Text style={styles.legendText}>Evento Público</Text>
               </View>
-            ))
-          ) : (
-            <Text style={{color: '#94a3b8'}}>
-              No hay eventos confirmados por ahora.
-            </Text>
-          )}
-        </View>
-
+              <View style={styles.legendItem}>
+                <View style={[styles.dot, { backgroundColor: '#ff4444' }]} />
+                <Text style={styles.legendText}>Ocupado</Text>
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
